@@ -1,7 +1,6 @@
 const router = require('koa-router')()
 const UsersServer = require('../service/UsersServer');
-
-router.prefix('/users');
+router.prefix('/api/users');
 
 router.get('/', function ( ctx ) {
     const userData = ctx.body;
@@ -14,16 +13,19 @@ router.post('/login', async function ( ctx ) {
     const body = ctx.request.body;
 
     try {
-        const result = await UsersServer.checkUserStatus( body.code );
+        const result = await UsersServer.checkUserStatus( body.code, body.loginStatus );
 
         if (result) {
-            ctx.body = result;
+            ctx.body = {
+                ban: result.ban
+            };
         } else {
             ctx.body = {
                 register: true
             }
         }
     } catch (err) {
+        console.log(err, 'err');
         ctx.throw( 400, err )
     }
 });
@@ -40,6 +42,12 @@ router.post('/register', async function ( ctx ) {
         console.log(err, 'register error');
         ctx.throw( 400, err )
     }
+});
+
+router.post('/avatar', async function ( ctx ) {
+    console.log(ctx.request.files.path);
+
+    ctx.body = 'success'
 })
 
 module.exports = router

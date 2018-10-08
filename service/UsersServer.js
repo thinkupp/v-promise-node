@@ -4,32 +4,36 @@ const GlobalModel = require('../model/global');
 const WeChatServer = require('./WeChatServer');
 const ApiServer = require('./ApiServer');
 
-const checkUserStatus = function ( code ) {
+const checkUserStatus = function ( code, loginStatus ) {
     const { appid, secret } = WeChatServer.getWeChatInfo();
 
     return new Promise(async (resolve, reject) => {
         try {
             const result = await ApiServer.fetchSessionKey( appid, secret, code );
             const { session_key, openid, unionid } = result;
-            console.log(openid, 'openid');
-            const query = unionid ? {
-                unionid
-            } : {
-                openid
-            };
+            // const query = unionid ? {
+            //     unionid
+            // } : {
+            //     openid
+            // };
+            const query = { openid };
 
-            const g = await GlobalModel.findOne({});
+            const g = await GlobalModel.findOne();
 
             let name = '$create';
             if (g) {
                 name = '$updateOne';
-                UsersModel.$updateOne(query, {
-                    $inc: {
-                        loginNumber: 1
-                    },
-
+                const updateData = {
                     lastLoginTime: Date.now()
-                })
+                };
+
+                if ( !loginStatus ) {
+                    updateData['$inc'] = {
+                        loginNumber: 1
+                    }
+                }
+
+                UsersModel.$updateOne(query, updateData)
             }
 
             GlobalModel[name] ({}, {
