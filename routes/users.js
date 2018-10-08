@@ -17,7 +17,8 @@ router.post('/login', async function ( ctx ) {
 
         if (result) {
             ctx.body = {
-                ban: result.ban
+                ban: result.ban,
+                id: result._id
             };
         } else {
             ctx.body = {

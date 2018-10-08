@@ -33,7 +33,7 @@ const checkUserStatus = function ( code, loginStatus ) {
                     }
                 }
 
-                UsersModel.$updateOne(query, updateData)
+                await UsersModel.$updateOne(query, updateData)
             }
 
             GlobalModel[name] ({}, {
