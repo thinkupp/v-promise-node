@@ -6,12 +6,11 @@ const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser');
 const logger = require('koa-logger');
 const StartServer = require('./service/StartServer');
-const koaBody = require('koa-body');
 const path = require('path');
 
+const koaBody = require('koa-body');
 app.use(koaBody({
     multipart: true,
-    encoding: 'gzip',
     formidable:{
         uploadDir:path.join(__dirname, 'uploads/'), // 设置文件上传目录
         keepExtensions: true,    // 保持文件的后缀
@@ -22,7 +21,6 @@ app.use(koaBody({
         },
     }
 }))
-
 // const session = require('koa-session');
 
 StartServer.clientDB();
@@ -69,8 +67,10 @@ app.on('error', (err, ctx) => {
 
 const index = require('./routes/index');
 const users = require('./routes/users');
+const upload = require('./routes/upload');
 // routes
 app.use(index.routes(), index.allowedMethods());
 app.use(users.routes(), users.allowedMethods());
+app.use(upload.routes(), upload.allowedMethods());
 
 module.exports = app

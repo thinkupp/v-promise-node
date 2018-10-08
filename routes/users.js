@@ -44,10 +44,4 @@ router.post('/register', async function ( ctx ) {
     }
 });
 
-router.post('/avatar', async function ( ctx ) {
-    console.log(ctx.request.files.path);
-
-    ctx.body = 'success'
-})
-
 module.exports = router
