@@ -8,13 +8,14 @@ router.get('/', function ( ctx ) {
     ctx.body = 'success'
 })
 
-router.post('/avatar', async function ( ctx ) {
-    console.log('上传图片成功', ctx.request.files.file.path);
-    const file = fs.statSync(ctx.request.files.file.path);
+router.post('/image', async function ( ctx ) {
+    console.log(ctx.request.files);
+    const path = ctx.request.files.image.path;
+    console.log('上传图片成功', path);
+    const file = fs.statSync(path);
     console.log(file.size);
     ctx.body = {
-        code: 200,
-        message: 'success'
+        image: path
     }
 })
 
