@@ -45,7 +45,7 @@ const UsersSchema = new Schema({
     systemInfo: Object,
     scene: Number,
     openid: String,
-
+    registerTime: Number,
 });
 
 UsersSchema.statics = Object.assign({}, CommonQuestionStatics);

@@ -10,39 +10,47 @@ const checkUserStatus = function ( code, loginStatus ) {
     return new Promise(async (resolve, reject) => {
         try {
             const result = await ApiServer.fetchSessionKey( appid, secret, code );
+            if (result.errmsg && result.errcode) return reject( result.errmsg );
+
             const { session_key, openid, unionid } = result;
-            // const query = unionid ? {
-            //     unionid
-            // } : {
-            //     openid
-            // };
             const query = { openid };
 
-            const g = await GlobalModel.findOne();
+            let u = await UsersModel.findOne( query );
+            const sk = await SessionKeyModel.findOne( query );
 
-            let name = '$create';
-            if (g) {
-                name = '$updateOne';
-                const updateData = {
-                    lastLoginTime: Date.now()
-                };
+            const sessionKeyData = {
+                sessionKey: session_key,
+                openid
+            };
+
+            if (u && u.registerTime) {
+                const updateData = { lastLoginTime: Date.now() };
 
                 if ( !loginStatus ) {
-                    updateData['$inc'] = {
-                        loginNumber: 1
-                    }
+                    updateData['$inc'] = { loginNumber: 1 }
                 }
 
-                await UsersModel.$updateOne(query, updateData)
+                await UsersModel.$updateOne( query, updateData );
+            } else {
+                if (!u) {
+                    u = await UsersModel.$create( query );
+                    console.log('u', u);
+                }
             }
 
-            GlobalModel[name] ({}, {
-                sessionKey: session_key
-            });
+            const returnObj = {};
+            returnObj.id = u._id;
+            returnObj.ban = u.ban;
+            returnObj.regStatus = !!u.registerTime;
 
-            return resolve(UsersModel.$findOne(query))
+            if (sk) {
+                await SessionKeyModel.$updateOne( query, sessionKeyData );
+            } else {
+                await SessionKeyModel.$create ( sessionKeyData );
+            }
+
+            return resolve( returnObj )
         } catch (err) {
-            console.log(err, 'checkout status error');
             reject( err )
         }
     })
@@ -51,12 +59,18 @@ const checkUserStatus = function ( code, loginStatus ) {
 const register = function ( data ) {
     return new Promise(async (resolve, reject) => {
         try {
+            const _id = data.id;
+            if (!_id) return reject( 'error register id' );
+
+            delete data.id;
             const about = WeChatServer.getWeChatInfo();
             const { encryptedData, iv } = data.detail;
-            let sessionKey = await GlobalModel.findOne({});
+            let sessionKey = await SessionKeyModel.findOne();
             sessionKey = sessionKey.sessionKey;
+            if (!sessionKey) return reject( 'session key error' );
+
             const userInfo = await WeChatServer.decryptData( about.appid, sessionKey, encryptedData, iv );
-            return resolve(UsersModel.$create({
+            return resolve(UsersModel.$updateOne({ _id }, {
                 nickName: userInfo.nickName,
                 gender: userInfo.gender,
                 avatar: userInfo.avatar,
@@ -64,7 +78,8 @@ const register = function ( data ) {
                 region: `${userInfo.country} ${userInfo.province } ${userInfo.city}`,
                 scene: data.scene,
                 openid: userInfo.openId,
-                unionid: userInfo.unionid
+                unionid: userInfo.unionid,
+                registerTime: Date.now()
             }))
         } catch (err) {
             reject (err);
