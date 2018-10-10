@@ -85,9 +85,14 @@ const register = function ( data ) {
             reject (err);
         }
     })
+};
+
+const checkUser = function ( uid ) {
+    return UsersModel.$findOne({_id: uid})
 }
 
 module.exports = {
     checkUserStatus,
-    register
+    register,
+    checkUser
 }
