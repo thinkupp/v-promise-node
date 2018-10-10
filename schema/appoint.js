@@ -19,11 +19,12 @@ const AppointSchema = new Schema({
     startTime: Number,
     endTime: Number,
     onlookers: Boolean,     // 是否允许围观
-    private: Boolean,       //
+    private: Boolean,
     effectiveTime: Number,
     autoCreate: String,
     type: String,
     creator: String,        // 创建者
+    desc: String,           // 描述
 });
 
 AppointSchema.statics = Object.assign({}, CommonQuestionStatics);
