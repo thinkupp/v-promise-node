@@ -3,12 +3,25 @@ router.prefix('/api/appoint');
 const AppointServer = require('../service/AppointServer');
 const UserServer = require('../service/UsersServer');
 
-router.post('/', async function ( ctx ) {
+router.get('/create', async function ( ctx ) {
+    try {
+        const query = ctx.request.query;
+        const uid = ctx.request.header.uid;
+        const u = await UserServer.checkUser( uid );
+        console.log(u);
+        if ( !u ) return ctx.throw(400, '用户信息验证失败');
+        // 查询用户创建
+        ctx.body = await AppointServer.getAppoint( uid, query );
+    } catch (err) {
+        ctx.throw(400, err.toString())
+    }
+});
+
+router.post('/create', async function ( ctx ) {
     const body = ctx.request.body;
     const uid = ctx.request.header.uid;
-    if (!uid) return ctx.throw(400, '用户信息验证失败');
-    const u = UserServer.checkUser( uid );
-    if (!u) return ctx.throw(400, '用户信息验证失败');
+    const u = await UserServer.checkUser( uid );
+    if ( !u ) return ctx.throw(400, '用户信息验证失败');
 
     try {
         body.creator = uid;
@@ -20,5 +33,7 @@ router.post('/', async function ( ctx ) {
         ctx.throw(400, JSON.stringify(err))
     }
 });
+
+
 
 module.exports = router;

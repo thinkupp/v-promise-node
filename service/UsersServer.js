@@ -88,6 +88,7 @@ const register = function ( data ) {
 };
 
 const checkUser = function ( uid ) {
+    if (!uid) return Promise.reject('用户不存在');
     return UsersModel.$findOne({_id: uid})
 }
 
