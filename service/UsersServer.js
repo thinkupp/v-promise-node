@@ -3,6 +3,7 @@ const SessionKeyModel = require('../model/session-key');
 const GlobalModel = require('../model/global');
 const WeChatServer = require('./WeChatServer');
 const ApiServer = require('./ApiServer');
+const mongoose = require('mongoose');
 
 const checkUserStatus = function ( code, loginStatus ) {
     const { appid, secret } = WeChatServer.getWeChatInfo();
@@ -89,7 +90,7 @@ const register = function ( data ) {
 
 const checkUser = function ( uid ) {
     if (!uid) return Promise.reject('用户不存在');
-    return UsersModel.$findOne({_id: uid})
+    return UsersModel.$findById( mongoose.Types.ObjectId( uid ) );
 }
 
 module.exports = {

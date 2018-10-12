@@ -8,7 +8,6 @@ router.get('/create', async function ( ctx ) {
         const query = ctx.request.query;
         const uid = ctx.request.header.uid;
         const u = await UserServer.checkUser( uid );
-        console.log(u);
         if ( !u ) return ctx.throw(400, '用户信息验证失败');
         // 查询用户创建
         ctx.body = await AppointServer.getAppoint( uid, query );

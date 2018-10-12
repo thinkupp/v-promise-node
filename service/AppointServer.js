@@ -9,7 +9,7 @@ const createAppoint = function ( params ) {
 const getAppoint = function ( uid, query ) {
     const getQuery = { creator: uid };
     const { startIndex = 0, count = 20 } = query;
-    return AppointModel.$find( getQuery, startIndex, count )
+    return AppointModel.$find( { getQuery, startIndex, count } )
 };
 
 module.exports = {
