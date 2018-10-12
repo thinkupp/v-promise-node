@@ -74,7 +74,7 @@ const register = function ( data ) {
             return resolve(UsersModel.$updateOne({ _id }, {
                 nickName: userInfo.nickName,
                 gender: userInfo.gender,
-                avatar: userInfo.avatar,
+                avatar: userInfo.avatarUrl,
                 systemInfo: data.systemInfo,
                 region: `${userInfo.country} ${userInfo.province } ${userInfo.city}`,
                 scene: data.scene,

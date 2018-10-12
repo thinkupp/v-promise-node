@@ -23,8 +23,7 @@ router.post('/create', async function ( ctx ) {
     if ( !u ) return ctx.throw(400, '用户信息验证失败');
 
     try {
-        body.creator = uid;
-        const result = await AppointServer.createAppoint( body );
+        const result = await AppointServer.createAppoint( uid, body );
         if (result) return ctx.body = result;
         ctx.throw(400, '创建失败')
     } catch (err) {
