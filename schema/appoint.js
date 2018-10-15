@@ -23,10 +23,84 @@ const AppointSchema = new Schema({
     effectiveTime: Number,
     autoCreate: String,
     type: String,
-    creator: String,        // 创建者
+    creator: Schema.Types.ObjectId,        // 创建者
     desc: String,           // 描述
 });
 
-AppointSchema.statics = Object.assign({}, CommonQuestionStatics);
+AppointSchema.statics = Object.assign({
+    getCreateAppoint,
+    getJoinAppoint
+}, CommonQuestionStatics);
+
+async function getCreateAppoint( uid, query = {} ) {
+    return new Promise((resolve, reject) => {
+        try {
+            let { startIndex = 0, count = 20 } = query;
+            startIndex = Number( startIndex );
+            count = Number( count );
+
+            this.aggregate([
+                {
+                    $match: {
+                        creator: mongoose.Types.ObjectId( uid )
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'creator',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                {
+                    $limit: count
+                },
+                {
+                    $skip: startIndex
+                },
+                {
+                    $sort: {
+                        _id: -1
+                    }
+                }
+            ])
+        } catch (err) {
+            reject( err );
+        }
+    })
+}
+
+function getJoinAppoint () {}
 
 module.exports = AppointSchema;
+
+/*
+*             this.aggregate([
+                {
+                    $match: {
+                        creator: mongoose.Types.ObjectId( uid )
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'creator',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                {
+                    $limit: count
+                },
+                {
+                    $skip: startIndex
+                },
+                {
+                    $sort: {
+                        _id: -1
+                    }
+                }
+            ])
+
+* */

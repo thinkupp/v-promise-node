@@ -58,7 +58,9 @@ const CommonStatics = (function() {
     /*
     * 查
     * */
-    const $find = function( query = {}, startIndex, count, sort = { _id: -1 }, field = {} ) {
+    const $find = function( { query = {}, startIndex, count, sort = { _id: -1 }, field = {} } ) {
+        if (typeof startIndex === 'string') startIndex = Number( startIndex );
+        if (typeof count === 'string') count = Number( count );
         const that = this;
         return new Promise((resolve, reject) => {
             that.find( query, field ).skip( startIndex ).limit( count ).sort( sort ).exec(function( err, result ) {
