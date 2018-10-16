@@ -15,6 +15,26 @@ const AppointSchema = new Schema({
         type: Array,
         default: []
     },
+    // 监督者上限
+    watcherMax: {
+        type: Number,
+        default: 0
+    },
+    // 监督者数量
+    watcherNumber: {
+        type: Number,
+        default: 0
+    },
+    // 访问量
+    accessNumber: {
+        type: Number,
+        default: 0
+    },
+    // 浏览人次
+    browsePeopleNumber: {
+        type: Number,
+        default: 0
+    },
 
     startTime: Number,
     endTime: Number,
@@ -33,13 +53,12 @@ AppointSchema.statics = Object.assign({
 }, CommonQuestionStatics);
 
 async function getCreateAppoint( uid, query = {} ) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             let { startIndex = 0, count = 20 } = query;
             startIndex = Number( startIndex );
             count = Number( count );
-
-            this.aggregate([
+            const result = await this.aggregate([
                 {
                     $match: {
                         creator: mongoose.Types.ObjectId( uid )
@@ -50,21 +69,21 @@ async function getCreateAppoint( uid, query = {} ) {
                         from: 'users',
                         localField: 'creator',
                         foreignField: '_id',
-                        as: 'user'
+                        as: 'u'
                     }
                 },
-                {
-                    $limit: count
-                },
-                {
-                    $skip: startIndex
-                },
-                {
-                    $sort: {
-                        _id: -1
-                    }
+                { $limit: count },
+                { $skip: startIndex },
+                { $sort: { _id: -1 } }
+            ]);
+
+            result.forEach(function ( item ) {
+                if (item.u && item.u.length) {
+                    item.u = item.u[ 0 ];
                 }
-            ])
+            });
+
+            resolve( result )
         } catch (err) {
             reject( err );
         }
@@ -74,33 +93,3 @@ async function getCreateAppoint( uid, query = {} ) {
 function getJoinAppoint () {}
 
 module.exports = AppointSchema;
-
-/*
-*             this.aggregate([
-                {
-                    $match: {
-                        creator: mongoose.Types.ObjectId( uid )
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'users',
-                        localField: 'creator',
-                        foreignField: '_id',
-                        as: 'user'
-                    }
-                },
-                {
-                    $limit: count
-                },
-                {
-                    $skip: startIndex
-                },
-                {
-                    $sort: {
-                        _id: -1
-                    }
-                }
-            ])
-
-* */
