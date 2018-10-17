@@ -3,14 +3,6 @@ const CommonQuestionStatics = require('../statics/CommonStatics');
 const Schema = mongoose.Schema;
 
 const AppointSchema = new Schema({
-    createTime: {
-        type: Number,
-        default: Date.now()
-    },
-    updateTime: {
-        type: Number,
-        default: Date.now()
-    },
     images: {
         type: Array,
         default: []
@@ -35,7 +27,8 @@ const AppointSchema = new Schema({
         type: Number,
         default: 0
     },
-
+    createTime: Number,
+    updateTime: Number,
     startTime: Number,
     endTime: Number,
     onlookers: Boolean,     // 是否允许围观
@@ -45,6 +38,10 @@ const AppointSchema = new Schema({
     type: String,
     creator: Schema.Types.ObjectId,        // 创建者
     desc: String,           // 描述
+    u: {
+        type: Schema.Types.Mixed,
+        ref: 'users'
+    }
 });
 
 AppointSchema.statics = Object.assign({
@@ -72,6 +69,14 @@ async function getCreateAppoint( uid, query = {} ) {
                         as: 'u'
                     }
                 },
+                {
+                    $lookup: {
+                        from: 'watchs',
+                        localField: 'creator',
+                        foreignField: 'userId',
+                        as: 'watching'
+                    }
+                },
                 { $limit: count },
                 { $skip: startIndex },
                 { $sort: { _id: -1 } }
@@ -80,6 +85,10 @@ async function getCreateAppoint( uid, query = {} ) {
             result.forEach(function ( item ) {
                 if (item.u && item.u.length) {
                     item.u = item.u[ 0 ];
+                }
+
+                if (item.watching) {
+
                 }
             });
 

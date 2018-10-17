@@ -1,9 +1,13 @@
+const mongoose = require('mongoose');
+
 const AppointModel = require('../model/appoint');
 const UsersModel = require('../model/users');
-const mongoose = require('mongoose');
-const BrowseModel = require('./BrowseServer');
+const WatchModel = require('../model/watch');
+
+const BrowseServer = require('./BrowseServer');
 
 const createAppoint = function ( uid, params ) {
+    params.createTime = Date.now();
     params.startTime = new Date( params.startTime ).getTime();
     params.endTime = params.startTime + params.effectiveTime * 60 * 1000;
     params.creator = mongoose.Types.ObjectId( uid );
@@ -11,6 +15,10 @@ const createAppoint = function ( uid, params ) {
 };
 
 const getAppointDetail = function ( uid, id ) {
+    AppointModel.findById( mongoose.Types.ObjectId( id ) ).populate('users').exec(function ( err, doc ) {
+        console.log(err, doc);
+    });
+
     return new Promise(async (resolve, reject) => {
         try {
             const d = await AppointModel.$findById(mongoose.Types.ObjectId( id ));
@@ -19,10 +27,8 @@ const getAppointDetail = function ( uid, id ) {
                 // 访问量自增
                 d.accessNumber++;
 
-                const updateData = {
-                    $inc: { accessNumber: 1 }
-                };
-                const peopleNumberNeed = await BrowseModel.handleBrowseRecord( uid, id );
+                const updateData = {$inc: { accessNumber: 1 }};
+                const peopleNumberNeed = await BrowseServer.handleBrowseRecord( uid, id );
                 if ( peopleNumberNeed ) {
                     updateData.$inc.browsePeopleNumber = 1;
                     d.browsePeopleNumber++;
@@ -30,12 +36,14 @@ const getAppointDetail = function ( uid, id ) {
 
                 await AppointModel.$updateOne({ _id: id }, updateData);
 
+                const watching = await WatchModel.$findOne({userId: uid});
                 const detail = JSON.parse(JSON.stringify(d));
+                detail.watching = !!watching;
                 detail.u = {
                     nickName: u.nickName,
                     avatar: u.avatar,
                     _id: u._id,
-                    gender: u.gender
+                    gender: u.gender,
                 };
                 resolve(detail)
             }  else {
