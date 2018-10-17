@@ -7,7 +7,6 @@ const WatchModel = require('../model/watch');
 const BrowseServer = require('./BrowseServer');
 
 const createAppoint = function ( uid, params ) {
-    params.createTime = Date.now();
     params.startTime = new Date( params.startTime ).getTime();
     params.endTime = params.startTime + params.effectiveTime * 60 * 1000;
     params.creator = mongoose.Types.ObjectId( uid );

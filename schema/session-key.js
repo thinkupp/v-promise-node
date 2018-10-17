@@ -3,6 +3,11 @@ const CommonQuestionStatics = require('../statics/CommonStatics');
 const Schema = mongoose.Schema;
 
 const SessionKeySchema = new Schema({
+    createTime: {
+        type: Number,
+        default: Date.now
+    },
+
     sessionKey: String,
     openid: String
 });

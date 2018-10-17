@@ -3,6 +3,14 @@ const CommonQuestionStatics = require('../statics/CommonStatics');
 const Schema = mongoose.Schema;
 
 const UsersSchema = new Schema({
+    createTime: {
+        type: Number,
+        default: Date.now
+    },
+    lastLoginTime: {
+        type: Number,
+        default: Date.now
+    },
     anonymousNickname: {
         type: String,
         default: '匿名'
@@ -28,8 +36,6 @@ const UsersSchema = new Schema({
         default: 1
     },
 
-    createTime: Number,
-    lastLoginTime: Number,
     nickName: String,
     avatar: String,
     gender: String,

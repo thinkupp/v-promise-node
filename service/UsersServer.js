@@ -34,12 +34,7 @@ const checkUserStatus = function ( code, loginStatus ) {
                 await UsersModel.$updateOne( query, updateData );
             } else {
                 if (!u) {
-                    const now = Date.now();
-                    u = await UsersModel.$create({
-                        openid,
-                        createTime: now,
-                        lastLoginTime: now
-                    });
+                    u = await UsersModel.$create(query);
                 }
             }
 

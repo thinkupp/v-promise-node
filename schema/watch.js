@@ -3,7 +3,11 @@ const CommonQuestionStatics = require('../statics/CommonStatics');
 const Schema = mongoose.Schema;
 
 const WatchSchema = new Schema({
-    createTime: Number,
+    createTime: {
+        type: Number,
+        default: Date.now
+    },
+
     appointId: String,
     userId: String
 });

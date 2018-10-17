@@ -3,6 +3,14 @@ const CommonQuestionStatics = require('../statics/CommonStatics');
 const Schema = mongoose.Schema;
 
 const AppointSchema = new Schema({
+    createTime: {
+        type: Number,
+        default: Date.now
+    },
+    updateTime: {
+        type: Number,
+        default: Date.now
+    },
     images: {
         type: Array,
         default: []
@@ -27,8 +35,6 @@ const AppointSchema = new Schema({
         type: Number,
         default: 0
     },
-    createTime: Number,
-    updateTime: Number,
     startTime: Number,
     endTime: Number,
     onlookers: Boolean,     // 是否允许围观
