@@ -5,7 +5,6 @@ const json = require('koa-json');
 const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser');
 const logger = require('koa-logger');
-const StartServer = require('./service/StartServer');
 const path = require('path');
 
 const koaBody = require('koa-body');
@@ -21,16 +20,6 @@ app.use(koaBody({
         },
     }
 }))
-// const session = require('koa-session');
-
-StartServer.clientDB();
-
-// app.keys = ['www.vvipo.cn/session'];
-// const SESSION_CONFIG = {
-//     key: 'koa:sess',    // cookie key
-//     maxAge: 86400000,   // cookie的过期时间
-// };
-// app.use(session(SESSION_CONFIG, app));
 
 // error handler
 onerror(app)

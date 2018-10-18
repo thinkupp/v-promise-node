@@ -3,6 +3,7 @@ router.prefix('/api/appoint');
 const AppointServer = require('../service/AppointServer');
 const UserServer = require('../service/UsersServer');
 const GlobalServer = require('../service/GlobalServer');
+const db = require('../utils/db');
 
 router.get('/create', async function ( ctx ) {
     try {

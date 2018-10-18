@@ -6,7 +6,7 @@ router.post('/login', async function ( ctx ) {
     const body = ctx.request.body;
 
     try {
-        const result = await UsersServer.checkUserStatus( body.code, body.loginStatus );
+        const result = await UsersServer.checkUserStatus( body.code, body.loginStatus, ctx.request.header.host );
 
         if (result) {
             ctx.body = result;

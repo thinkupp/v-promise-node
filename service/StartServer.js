@@ -1,4 +1,4 @@
-const clientDB = function () {
+const clientMongoDB = function () {
     const mongoose = require('mongoose');
 
     const connectUrl = 'mongodb://localhost/v-promise';
