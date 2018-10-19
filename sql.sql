@@ -33,7 +33,7 @@ CREATE TABLE `appoint` (
 `images` blob DEFAULT NULL COMMENT '图片列表',
 `watcherMax` smallint(3) NOT NULL DEFAULT 0 COMMENT '监督者上限, 0不限制',
 `watcherNumber` smallint(3) DEFAULT 0 COMMENT '监督者数量',
-`accessNumber` int(6) DEFAULT 0 COMMENT '访问量',
+`accessNumber` smallint(6) DEFAULT 0 COMMENT '访问量',
 `browsePeopleNumber` smallint(6) DEFAULT 0 COMMENT '浏览人次',
 `startTime` int(11) NOT NULL COMMENT '开始时间',
 `endTime` int(11) NOT NULL COMMENT '结束时间',
