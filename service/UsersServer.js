@@ -1,17 +1,13 @@
-const UsersModel = require('../model/users');
-const SessionKeyModel = require('../model/session-key');
-const GlobalModel = require('../model/global');
 const WeChatServer = require('./WeChatServer');
 const ApiServer = require('./ApiServer');
-const mongoose = require('mongoose');
-const db = require('../utils/db');
-const uuid = require('node-uuid');
+const { $update, $findOne, $insert } = require('../utils/db');
+const types = require('../utils/types');
 
-function initUser ( openid, uid ) {
-    return db.query('insert into users (openid, uid) VALUES (?, ?)', [ openid, uid ]);
+function initUser ( openid ) {
+    return db.query('insert into users (openid) VALUES (?)', [ openid ]);
 }
 
-const checkUserStatus = function ( code, loginStatus, ip ) {
+const checkUserStatus = function ( code, loginStatus ) {
     const { appid, secret } = WeChatServer.getWeChatInfo();
 
     return new Promise(async (resolve, reject) => {
@@ -20,83 +16,61 @@ const checkUserStatus = function ( code, loginStatus, ip ) {
             if (result.errmsg && result.errcode) return reject( result.errmsg );
 
             const { session_key, openid } = result;
-            const query = { openid };
 
-            // 用户是否存在
-            let u = await db.query('select openid from users where openid = ?', [ openid ]);
-            if ( u.length ) {
-                u = u[0];
-                console.log(u);
-            } else {
-                // 用户不存在，根据openid、uid初始化用户
-                const uid = uuid.vi().replace('-', '');
-                await initUser( openid, uid );
-                u = {
-                    uid,
-                    ban: false
+            // 如果用户存在，更新用户最后登录时间
+            let u = await $findOne('users', {
+                openid
+            }, ['id', 'openid', 'registerTime']);
+
+            if ( u ) {
+                if (u.registerTime) {
+                    const updateData = { lastLoginTime: parseInt(Date.now() / 1000) };
+                    if (!loginStatus) updateData.loginNumber = 'loginNumber+1' + types.SPECIAL_SET_VALUE;
+                    await $update('users', {openid}, updateData)
                 }
             }
 
-            resolve({
-                ban: u.ban,
-                regStatus: !!u.registerTime,
-                uid: u.uid
-            });
-            // let u = await UsersModel.findOne( query );
-            // const sk = await SessionKeyModel.findOne( query );
+            // 如果不存在，创建一个以openid为标识的临时用户
+            else {
+                const i = await $insert('users', {openid});
+                u = { ban: false, id: i.insertId }
+            }
 
-            // const sessionKeyData = {
-            //     sessionKey: session_key,
-            //     openid
-            // };
-            //
-            // if (u && u.registerTime) {
-            //     const updateData = { lastLoginTime: Date.now() };
-            //
-            //     if ( !loginStatus ) {
-            //         updateData['$inc'] = { loginNumber: 1 }
-            //     }
-            //
-            //     await UsersModel.$updateOne( query, updateData );
-            // } else {
-            //     if (!u) {
-            //         u = await UsersModel.$create(query);
-            //     }
-            // }
-            //
-            // const returnObj = {};
-            // returnObj.id = u._id;
-            // returnObj.ban = u.ban;
-            // returnObj.regStatus = !!u.registerTime;
-            //
-            // if (sk) {
-            //     await SessionKeyModel.$updateOne( query, sessionKeyData );
-            // } else {
-            //     await SessionKeyModel.$create ( sessionKeyData );
-            // }
-// sequel pro encountered an unexpected error
-            return resolve( returnObj )
+            const sessionKeyData = { session_key,  user_id: u.id };
+
+            const sk = await $findOne('session_keys', { user_id: u.id });
+
+            if (sk) {
+                $update('session_keys', {user_id: u.id}, sessionKeyData)
+            } else {
+                $insert('session_keys', sessionKeyData);
+            }
+
+            resolve({
+                ban: !!u.ban,
+                regStatus: !!u.registerTime,
+                id: u.id
+            });
         } catch (err) {
             reject( err )
         }
     })
 };
 
-const register = function ( data ) {
+const register = function ( id, data ) {
     return new Promise(async (resolve, reject) => {
         try {
-            const _id = data.id;
-            if (!_id) return reject( 'error register id' );
+            if (!id) reject('ID错误，注册失败');
 
-            delete data.id;
             const about = WeChatServer.getWeChatInfo();
             const { encryptedData, iv } = data.detail;
-            let sessionKey = await SessionKeyModel.findOne();
-            sessionKey = sessionKey.sessionKey;
-            if (!sessionKey) return reject( 'session key error' );
+            let uSession = await $findOne('session_keys', { user_id: id });
 
-            const userInfo = await WeChatServer.decryptData( about.appid, sessionKey, encryptedData, iv );
-            return resolve(UsersModel.$updateOne({ _id }, {
+            // 客户端传code，重新获取sessionkey
+            if (!uSession) return reject( 'session key error' );
+
+            const userInfo = await WeChatServer.decryptData( about.appid, uSession.session_key, encryptedData, iv );
+            return resolve($update('users', { id }, {
                 nickName: userInfo.nickName,
                 gender: userInfo.gender,
                 avatar: userInfo.avatarUrl,
@@ -104,8 +78,8 @@ const register = function ( data ) {
                 region: `${userInfo.country} ${userInfo.province } ${userInfo.city}`,
                 scene: data.scene,
                 openid: userInfo.openId,
-                unionid: userInfo.unionid,
-                registerTime: Date.now()
+                unionid: userInfo.unionid || '',
+                registerTime: parseInt(Date.now() / 1000)
             }))
         } catch (err) {
             reject (err);
@@ -114,9 +88,17 @@ const register = function ( data ) {
 };
 
 const checkUser = function ( uid ) {
-    if (!uid) return Promise.reject('用户不存在');
-    return UsersModel.$findById( mongoose.Types.ObjectId( uid ) );
-}
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!uid) reject('错误的ID');
+            const u = await $findOne('users', {id: uid});
+            if (u) return resolve();
+            reject('用户不存在');
+        } catch (err) {
+            reject(err)
+        }
+    })
+};
 
 module.exports = {
     checkUserStatus,

@@ -3,14 +3,12 @@ router.prefix('/api/appoint');
 const AppointServer = require('../service/AppointServer');
 const UserServer = require('../service/UsersServer');
 const GlobalServer = require('../service/GlobalServer');
-const db = require('../utils/db');
 
 router.get('/create', async function ( ctx ) {
     try {
         const query = ctx.request.query;
         const uid = ctx.request.header.uid;
-        const u = await UserServer.checkUser( uid );
-        if ( !u ) return ctx.throw(400, '用户信息验证失败');
+        await UserServer.checkUser( uid );
         // 查询用户创建
         ctx.body = await AppointServer.getUserCreateAppointList( uid, query );
     } catch (err) {

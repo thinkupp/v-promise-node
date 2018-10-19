@@ -21,8 +21,10 @@ router.post('/login', async function ( ctx ) {
 
 router.post('/register', async function ( ctx ) {
     try {
+        const uid = ctx.request.header.uid;
+        await UsersServer.checkUser( uid );
         const body = ctx.request.body;
-        const result = await UsersServer.register( body );
+        const result = await UsersServer.register( uid, body );
         if ( !result ) ctx.throw( 400, '注册失败' );
 
         ctx.body = {}

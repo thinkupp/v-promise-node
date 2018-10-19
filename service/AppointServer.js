@@ -5,6 +5,8 @@ const UsersModel = require('../model/users');
 const WatchModel = require('../model/watch');
 
 const BrowseServer = require('./BrowseServer');
+const { $update, $findOne, $insert, $findByLimit } = require('../utils/db');
+
 
 const createAppoint = function ( uid, params ) {
     params.startTime = new Date( params.startTime ).getTime();
@@ -56,8 +58,7 @@ const getAppointDetail = function ( uid, id ) {
 }
 
 const getUserCreateAppointList = function ( uid, query ) {
-    const { startIndex = 0, count = 20 } = query;
-    return AppointModel.getCreateAppoint( uid, { startIndex, count } )
+    return $findByLimit('appoint', { id: uid }, null, query)
 };
 
 module.exports = {
