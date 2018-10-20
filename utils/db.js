@@ -97,6 +97,7 @@ function $update( table, query, updateData ) {
         })
     }
 
+    console.log(prefix);
     return dbQuery(prefix, data);
 }
 
@@ -214,16 +215,18 @@ function $findAppointByLimit( query, option ) {
 
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            const str = `select appoint.*, users.avatar, users.nickName from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} limit ${size}`;
+            const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} limit ${size}`;
 
             const result = await dbQuery(str);
             result.forEach(item => {
                 item.u = {
                     nickName: item.nickName,
-                    avatar: item.avatar
+                    avatar: item.avatar,
+                    gender: item.gender
                 };
                 delete item.nickName;
                 delete item.avatar;
+                delete item.gender;
             })
             return resolve(result);
         } catch (err) {

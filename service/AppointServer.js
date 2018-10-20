@@ -1,11 +1,6 @@
-const mongoose = require('mongoose');
-
-const AppointModel = require('../model/appoint');
-const UsersModel = require('../model/users');
-const WatchModel = require('../model/watch');
-
-const BrowseServer = require('./BrowseServer');
 const { dbQuery, $update, $findOne, $insert, $findAppointByLimit } = require('../utils/db');
+const types = require('../utils/types')
+const { getCurrentTime } = require('../utils');
 
 const createAppoint = function ( uid, params ) {
     params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
@@ -15,44 +10,56 @@ const createAppoint = function ( uid, params ) {
     return $insert('appoint', params);
 };
 
-const getAppointDetail = function ( uid, id ) {
-    AppointModel.findById( mongoose.Types.ObjectId( id ) ).populate('users').exec(function ( err, doc ) {
-        console.log(err, doc);
-    });
-
+const getAppointDetail = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
-            const d = await AppointModel.$findById(mongoose.Types.ObjectId( id ));
-            const u = await UsersModel.$findById(mongoose.Types.ObjectId( uid ));
-            if (d && u) {
-                // 访问量自增
-                d.accessNumber++;
+            // 查询是否有此人的访问记录
+            const visitRecord = await dbQuery(`select id from visit where userId = ${uid}`);
 
-                const updateData = {$inc: { accessNumber: 1 }};
-                const peopleNumberNeed = await BrowseServer.handleBrowseRecord( uid, id );
-                if ( peopleNumberNeed ) {
-                    updateData.$inc.browsePeopleNumber = 1;
-                    d.browsePeopleNumber++;
-                }
-
-                await AppointModel.$updateOne({ _id: id }, updateData);
-
-                const watching = await WatchModel.$findOne({userId: uid});
-                const detail = JSON.parse(JSON.stringify(d));
-                detail.watching = !!watching;
-                detail.u = {
-                    nickName: u.nickName,
-                    avatar: u.avatar,
-                    _id: u._id,
-                    gender: u.gender,
-                };
-                resolve(detail)
-            }  else {
-                if (!d) return reject( '约定不存在' );
-                reject( '用户不存在' )
+            if (visitRecord.length) {
+                await $update('visit', { userId: uid }, {
+                    visitNumber: 'visitNumber + 1' + types.SPECIAL_SET_VALUE,
+                    lastVisitTime: getCurrentTime()
+                });
+                // 增加访问量
+                await $update('appoint', { id: appointId }, {
+                    accessNumber: 'accessNumber + 1' + types.SPECIAL_SET_VALUE
+                })
+            } else {
+                await $insert('visit', {
+                    lastVisitTime: getCurrentTime(),
+                    userId: uid,
+                    appointId
+                });
+                // 增加浏览人次以及访问量
+                await $update('appoint', {
+                    id: appointId
+                }, {
+                    visitNumber: 'visitNumber + 1' + types.SPECIAL_SET_VALUE,
+                    accessNumber: 'accessNumber + 1' + types.SPECIAL_SET_VALUE
+                })
             }
+
+            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender from appoint inner join users on users.id = ${uid} where appoint.id = ${appointId}`);
+            if (result.length) {
+                result = result[0];
+            } else {
+                return reject('未找到数据');
+            }
+
+            result.u = {
+                avatar: result.avatar,
+                nickName: result.nickName,
+                gender: result.gender
+            };
+            delete result.avatar;
+            delete result.nickName;
+            delete result.gender;
+
+            // 查询该约定
+            resolve(result)
         } catch (err) {
-            reject( err );
+            reject(err);
         }
     })
 }
