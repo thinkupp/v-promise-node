@@ -35,14 +35,15 @@ CREATE TABLE `appoint` (
  `watcherNumber` smallint(3) DEFAULT 0 COMMENT '监督者数量',
  `accessNumber` smallint(6) DEFAULT 0 COMMENT '访问量',
  `browsePeopleNumber` smallint(6) DEFAULT 0 COMMENT '浏览人次',
- `startTime` int(11) NOT NULL COMMENT '开始时间',
- `endTime` int(11) NOT NULL COMMENT '结束时间',
+ `startTime` int(10) NOT NULL COMMENT '开始时间',
+ `endTime` int(10) NOT NULL COMMENT '结束时间',
  `onlookers` tinyint(1) DEFAULT 1 COMMENT '是否允许围观',
  `private` tinyint(1) DEFAULT 0 COMMENT '/',
  `effectiveTime` smallint(3) NOT NULL COMMENT '有效时间',
  `autoCreate` varchar(10) NOT NULL COMMENT '自动创建',
  `type` varchar(10) NOT NULL COMMENT '类型',
- `creator` int(10) NOT NULL COMMENT '创建者ID',
+ `creatorId` int(10) NOT NULL COMMENT '创建者ID',
  `des` varchar(255) DEFAULT '' COMMENT '描述',
+ `title` varchar(20) DEFAULT '' COMMENT '标题',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;

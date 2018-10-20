@@ -141,6 +141,21 @@ function $findOne( table, query, field ) {
         });
     }
 
+    const l = {
+        id: 1,
+        age: 1,
+        sex: 1,
+        u: {
+            nickname: '',
+            avatar: ''
+        }
+    }
+
+    const u = {
+        nickname: '',
+        avatar: ''
+    }
+
     return new Promise(async (resolve, reject) => {
         try {
             str += `from ${table} WHERE`;
@@ -170,28 +185,59 @@ function $findOne( table, query, field ) {
 *       size: 数量
 * */
 
-function $findByLimit( table, query, field, option = {} ) {
-    return new Promise((resolve, reject) => {
+// function $findByLimit( table, query, field, option = {}, join = '' ) {
+//     return new Promise((resolve, reject) => {
+//         try {
+//             const queryKey = isObject(query);
+//             const optionKey = isObject(option);
+//             const { id = 100000, size = 30 } = option;
+//
+//             if (!table) return reject('不存在的表');
+//             if (!queryKey || !optionKey) return reject('查询参数有误');
+//
+//             let str = handleSelectField(field, table) + join + handleWhereQuery(query) + `AND ${table}.id > ${id} limit ${size}`;
+//
+//             console.log(str);
+//             return resolve(dbQuery(str));
+//         } catch (err) {
+//             reject(err)
+//         }
+//     })
+// }
+
+function $findAppointByLimit( query, option ) {
+    return new Promise(async (resolve, reject) => {
         try {
             const queryKey = isObject(query);
             const optionKey = isObject(option);
             const { id = 100000, size = 30 } = option;
 
-            if (!table) return reject('不存在的表');
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            let str = handleSelectField(field, table) + handleWhereQuery(query) + `AND id > ${id} limit ${size}`;
+            const str = `select appoint.*, users.avatar, users.nickName from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} limit ${size}`;
 
-            return resolve(dbQuery(str));
+            const result = await dbQuery(str);
+            result.forEach(item => {
+                item.u = {
+                    nickName: item.nickName,
+                    avatar: item.avatar
+                };
+                delete item.nickName;
+                delete item.avatar;
+            })
+            return resolve(result);
         } catch (err) {
             reject(err)
         }
     })
 }
 
+
+
 module.exports = {
+    dbQuery,
     $update,
     $insert,
     $findOne,
-    $findByLimit
+    $findAppointByLimit
 }

@@ -18,15 +18,13 @@ router.get('/create', async function ( ctx ) {
 
 router.post('/create', async function ( ctx ) {
     const body = ctx.request.body;
-    const uid = ctx.request.header.uid;
-    const u = await UserServer.checkUser( uid );
-    if ( !u ) return ctx.throw(400, '用户信息验证失败');
+    const uid = Number(ctx.request.header.uid);
+    await UserServer.checkUser( uid );
 
     try {
-        body.creator = uid;
         const result = await AppointServer.createAppoint( uid, body );
         if (result) return ctx.body = {
-            _id: result._id
+            id: result.insertId
         }
         ctx.throw(400, '创建失败')
     } catch (err) {

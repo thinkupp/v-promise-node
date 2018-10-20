@@ -5,14 +5,14 @@ const UsersModel = require('../model/users');
 const WatchModel = require('../model/watch');
 
 const BrowseServer = require('./BrowseServer');
-const { $update, $findOne, $insert, $findByLimit } = require('../utils/db');
-
+const { dbQuery, $update, $findOne, $insert, $findAppointByLimit } = require('../utils/db');
 
 const createAppoint = function ( uid, params ) {
-    params.startTime = new Date( params.startTime ).getTime();
-    params.endTime = params.startTime + params.effectiveTime * 60 * 1000;
-    params.creator = mongoose.Types.ObjectId( uid );
-    return AppointModel.$create( params )
+    params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
+    params.endTime = parseInt((new Date( params.startTime ).getTime() + params.effectiveTime * 60 * 1000) / 1000);
+    params.creatorId = uid;
+    // return AppointModel.$create( params )
+    return $insert('appoint', params);
 };
 
 const getAppointDetail = function ( uid, id ) {
@@ -57,10 +57,10 @@ const getAppointDetail = function ( uid, id ) {
     })
 }
 
-const getUserCreateAppointList = function ( uid, query ) {
-    query.id = Number(query.id);
-    query.size = Number(query.size);
-    return $findByLimit('appoint', { creator: uid }, null, query)
+const getUserCreateAppointList = function ( uid, option ) {
+    option.id = Number(option.id);
+    option.size = Number(option.size);
+    return $findAppointByLimit( { creatorId: uid }, option);
 };
 
 module.exports = {
@@ -68,3 +68,5 @@ module.exports = {
     getAppointDetail,
     getUserCreateAppointList
 }
+
+// select * from lists inner join users on users.id = 100000
