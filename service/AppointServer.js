@@ -58,7 +58,9 @@ const getAppointDetail = function ( uid, id ) {
 }
 
 const getUserCreateAppointList = function ( uid, query ) {
-    return $findByLimit('appoint', { id: uid }, null, query)
+    query.id = Number(query.id);
+    query.size = Number(query.size);
+    return $findByLimit('appoint', { creator: uid }, null, query)
 };
 
 module.exports = {

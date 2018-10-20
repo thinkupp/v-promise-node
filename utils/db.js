@@ -10,7 +10,7 @@ const pool = mysql.createPool({
     insecureAuth: true
 });
 
-const query = function (sql, params) {
+const dbQuery = function (sql, params) {
     return new Promise(async (resolve, reject) => {
         let conn;
 
@@ -26,7 +26,7 @@ const query = function (sql, params) {
     })
 };
 
-function handleSelectField (field) {
+function handleSelectField ( field, table ) {
     let str = 'select ';
     if (!field || Object.prototype.toString.call(field) !== '[object Array]' || field.length < 1) {
         str += '* '
@@ -39,7 +39,8 @@ function handleSelectField (field) {
             }
         });
     }
-    return str;
+
+    return str + 'from ' + table;
 }
 
 function handleWhereQuery ( query ) {
@@ -96,8 +97,7 @@ function $update( table, query, updateData ) {
         })
     }
 
-    console.log(prefix, data);
-    return db.query(prefix, data);
+    return dbQuery(prefix, data);
 }
 
 function $insert( table, insertData ) {
@@ -120,7 +120,7 @@ function $insert( table, insertData ) {
     });
     str += `) VALUES (${part2})`;
 
-    return db.query(str, value);
+    return dbQuery(str, value);
 }
 
 function $findOne( table, query, field ) {
@@ -151,7 +151,7 @@ function $findOne( table, query, field ) {
                 queryValues.push(query[item]);
             });
 
-            const result = await db.query(str, queryValues);
+            const result = await dbQuery(str, queryValues);
             if (result.length) return resolve(result[0]);
             resolve(null);
         } catch (err) {
@@ -175,14 +175,14 @@ function $findByLimit( table, query, field, option = {} ) {
         try {
             const queryKey = isObject(query);
             const optionKey = isObject(option);
-            const { id = 1000000, size = 30 } = option;
+            const { id = 100000, size = 30 } = option;
 
             if (!table) return reject('不存在的表');
-            if (!queryKey || optionKey) return reject('查询参数有误');
+            if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            let str = handleSelectField(field) + handleWhereQuery(query) + `id>${id} limit ${size}`;
+            let str = handleSelectField(field, table) + handleWhereQuery(query) + `AND id > ${id} limit ${size}`;
 
-            return resolve(query(str));
+            return resolve(dbQuery(str));
         } catch (err) {
             reject(err)
         }
