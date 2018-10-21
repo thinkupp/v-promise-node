@@ -34,4 +34,4 @@ router.post('/register', async function ( ctx ) {
     }
 });
 
-module.exports = router
+module.exports = router;

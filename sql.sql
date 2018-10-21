@@ -30,6 +30,7 @@ CREATE TABLE `appoint` (
  `id` int(10) NOT NULL AUTO_INCREMENT,
  `createTime` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
  `updateTime` int(11) DEFAULT NULL COMMENT '最后修改时间',
+ `finishTime` int(11) DEFAULT NULL COMMENT '完成时间',
  `images` blob DEFAULT NULL COMMENT '图片列表',
  `watcherMax` smallint(3) NOT NULL DEFAULT 0 COMMENT '监督者上限, 0不限制',
  `watcherNumber` smallint(3) DEFAULT 0 COMMENT '监督者数量',
@@ -56,4 +57,24 @@ CREATE TABLE `visit` (
 `lastVisitTime` int(11) NOT NULL COMMENT '最后一次访问时间',
 `visitNumber` smallint(5) DEFAULT 1 COMMENT '访问次数',
  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='访问记录表';
+
+CREATE TABLE `watcher` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`appointId` int(10) NOT NULL,
+`userId` int(10) NOT NULL,
+ PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `comments` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`appointId` int(10) NOT NULL,
+`userId` int(10) NOT NULL,
+`content` varchar(255) NOT NULL,
+`parise` smallint(5) DEFAULT 0 COMMENT '得赞数',
+`ban` tinyint(1) DEFAULT 0 COMMENT '禁止显示',
+`tipOffs` smallint(5) DEFAULT 0 COMMENT '举报数',
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;

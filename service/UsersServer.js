@@ -3,10 +3,6 @@ const ApiServer = require('./ApiServer');
 const { $update, $findOne, $insert } = require('../utils/db');
 const types = require('../utils/types');
 
-function initUser ( openid ) {
-    return db.query('insert into users (openid) VALUES (?)', [ openid ]);
-}
-
 const checkUserStatus = function ( code, loginStatus ) {
     const { appid, secret } = WeChatServer.getWeChatInfo();
 

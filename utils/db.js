@@ -91,8 +91,12 @@ function $update( table, query, updateData ) {
     if (query) {
         const queryKeys = Object.keys(query);
         prefix += ' WHERE';
-        queryKeys.forEach(item => {
-            prefix += ` ${item} = ?`;
+        queryKeys.forEach((item, index) => {
+            if (index === 0) {
+                prefix += ` ${item} = ?`;
+            } else {
+                prefix += ` AND ${item} = ?`;
+            }
             data.push(query[item]);
         })
     }
@@ -215,7 +219,10 @@ function $findAppointByLimit( query, option ) {
 
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} limit ${size}`;
+            // const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`;
+            const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} left join watcher on watcher.userId = ${query.creatorId} and watcher.appointId = appoint.id WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`;
+
+            console.log(str);
 
             const result = await dbQuery(str);
             result.forEach(item => {

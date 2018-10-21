@@ -4,9 +4,8 @@ const { getCurrentTime } = require('../utils');
 
 const createAppoint = function ( uid, params ) {
     params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
-    params.endTime = parseInt((new Date( params.startTime ).getTime() + params.effectiveTime * 60 * 1000) / 1000);
+    params.endTime = parseInt((new Date( params.startTime ).getTime() * 1000 + params.effectiveTime * 60 * 1000) / 1000);
     params.creatorId = uid;
-    // return AppointModel.$create( params )
     return $insert('appoint', params);
 };
 
@@ -14,10 +13,12 @@ const getAppointDetail = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
             // 查询是否有此人的访问记录
-            const visitRecord = await dbQuery(`select id from visit where userId = ${uid}`);
-
+            const visitRecord = await dbQuery(`select id from visit where userId = ${uid} AND appointId = ${appointId}`);
             if (visitRecord.length) {
-                await $update('visit', { userId: uid }, {
+                await $update('visit', {
+                    userId: uid,
+                    appointId
+                }, {
                     visitNumber: 'visitNumber + 1' + types.SPECIAL_SET_VALUE,
                     lastVisitTime: getCurrentTime()
                 });
@@ -45,6 +46,23 @@ const getAppointDetail = function ( uid, appointId ) {
                 result = result[0];
             } else {
                 return reject('未找到数据');
+            }
+
+            // 计算约定状态
+            const currentTime = Date.now();
+            result.startTime *= 1000;
+            result.endTime *= 1000;
+
+            // 0-> 未开始, 1 -> 进行中 2 -> 结束 3 -> 按时完成 4 -> 超时完成
+            if (result.finishTime) {
+                result.finishTime *= 1000;
+                if (result.finishTime < result.endTime) {
+                    result.status = 3;
+                } else {
+                    result.status = 4;
+                }
+            } else {
+                result.status = currentTime < result.startTime ? 0 : currentTime > result.endTime ? 2 : 1;
             }
 
             result.u = {

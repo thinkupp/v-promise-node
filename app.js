@@ -58,10 +58,12 @@ const index = require('./routes/index');
 const users = require('./routes/users');
 const upload = require('./routes/upload');
 const appoint = require('./routes/appoint');
+const comment = require('./routes/comment');
 // routes
 app.use(index.routes(), index.allowedMethods());
 app.use(users.routes(), users.allowedMethods());
 app.use(upload.routes(), upload.allowedMethods());
 app.use(appoint.routes(), appoint.allowedMethods());
+app.use(comment.routes(), comment.allowedMethods());
 
 module.exports = app
