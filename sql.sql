@@ -76,5 +76,6 @@ CREATE TABLE `comments` (
 `parise` smallint(5) DEFAULT 0 COMMENT '得赞数',
 `ban` tinyint(1) DEFAULT 0 COMMENT '禁止显示',
 `tipOffs` smallint(5) DEFAULT 0 COMMENT '举报数',
+`reply` varchar(255) DEFAULT NULL COMMENT '回复者',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
