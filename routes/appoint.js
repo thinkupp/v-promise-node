@@ -60,4 +60,16 @@ router.get('/:id', async function ( ctx ) {
     }
 })
 
+router.post('/watch', async function ( ctx ) {
+    const body = ctx.request.body;
+    const uid = Number(ctx.request.header.uid);
+    await UserServer.checkUser(uid);
+    try {
+        const result = await AppointServer.watchAppoint(uid, body.appointId);
+        ctx.body = result;
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+})
+
 module.exports = router;

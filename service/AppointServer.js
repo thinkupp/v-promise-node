@@ -94,11 +94,49 @@ const getUserJoinAppointList = function ( uid, query ) {
     return $findJoinAppointByLimit(uid, query);
 };
 
+const watchAppoint = function ( uid, appointId ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if ( !appointId ) return reject('错误的约定ID');
+            let result = await dbQuery(`select deleted, creatorId, startTime, endTime, watcherNumber, watcherMax from appoint where appoint.id = ${appointId}`);
+            // 约定是否存在
+            if (!result.length) return reject('约定不存在');
+            // 约定是否已被删除
+            if (result.deleted) return reject('此约定已被创建者删除');
+            result = result[0];
+            if (uid === result.creatorId) return reject('创建者不能监督自己的约定');
+            // 查询是否已经监督
+            const record = await dbQuery(`select id from watcher where userId = ${uid} and appointId = ${appointId}`);
+            if (record.length) return reject('您已是监督者');
+            // 是否已经开始
+            const currentTime = Date.now();
+            if (currentTime < result.startTime) {
+                return reject('约定未开启');
+            }
+            if (currentTime > result.endTime) {
+                return reject('约定已结束')
+            }
+            // 是否已经满员
+            if (result.watcherMax > 0 && result.watcherNumber >= result.watcherMax) {
+                return reject('监督者已达到上限！')
+            }
+            // 写入监督者表
+            const watchResult = await dbQuery(`insert into watcher(userId, appointId) values (${uid}, ${appointId})`);
+            // 监督者
+            await dbQuery(`update appoint set watcherNumber = watcherNumber + 1 where appoint.id = ${appointId}`);
+            resolve(watchResult.insertId);
+        } catch (err) {
+            reject(err)
+        }
+    })
+}
+
 module.exports = {
     createAppoint,
     getAppointDetail,
     getUserCreateAppointList,
-    getUserJoinAppointList
+    getUserJoinAppointList,
+    watchAppoint
 }
 
 // select * from lists inner join users on users.id = 100000
