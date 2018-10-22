@@ -197,6 +197,7 @@ function $findOne( table, query, field ) {
          delete item.nickName;
          delete item.avatar;
          delete item.gender;
+         delete item.deleted;
 
          handleAppointStatus(item);
      })
