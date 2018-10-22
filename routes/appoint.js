@@ -25,13 +25,26 @@ router.post('/create', async function ( ctx ) {
         const result = await AppointServer.createAppoint( uid, body );
         if (result) return ctx.body = {
             id: result.insertId
-        }
+        };
         ctx.throw(400, '创建失败')
     } catch (err) {
         console.log(err.errors);
         ctx.throw(400, GlobalServer.handleError(err))
     }
 });
+
+router.get('/join', async function ( ctx ) {
+    try {
+        const query = ctx.request.query;
+        const uid = Number(ctx.request.header.uid);
+        await UserServer.checkUser(uid);
+
+        const result = await AppointServer.getUserJoinAppointList(uid, query);
+        ctx.body = result;
+    } catch (err) {
+        ctx.throw(400, err.toString())
+    }
+})
 
 router.get('/:id', async function ( ctx ) {
     const id = ctx.params.id;

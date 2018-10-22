@@ -1,4 +1,4 @@
-const { dbQuery, $update, $findOne, $insert, $findAppointByLimit } = require('../utils/db');
+const { dbQuery, $update, $findOne, $insert, $findAppointByLimit, $findJoinAppointByLimit } = require('../utils/db');
 const types = require('../utils/types')
 const { getCurrentTime } = require('../utils');
 
@@ -88,10 +88,17 @@ const getUserCreateAppointList = function ( uid, option ) {
     return $findAppointByLimit( { creatorId: uid }, option);
 };
 
+const getUserJoinAppointList = function ( uid, query ) {
+    query.startId = Number(query.startId) || -1;
+    query.size = Number(query.size) || 30;
+    return $findJoinAppointByLimit(uid, query);
+};
+
 module.exports = {
     createAppoint,
     getAppointDetail,
-    getUserCreateAppointList
+    getUserCreateAppointList,
+    getUserJoinAppointList
 }
 
 // select * from lists inner join users on users.id = 100000

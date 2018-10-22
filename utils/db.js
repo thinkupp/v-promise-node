@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promise');
+ const mysql = require('mysql2/promise');
 const types = require('./types');
 
 const pool = mysql.createPool({
@@ -210,6 +210,21 @@ function $findOne( table, query, field ) {
 //     })
 // }
 
+ function handleAppointData( appointData ) {
+     appointData.forEach(item => {
+         item.onlookers = !!item.onlookers;
+         item.private = !!item.private;
+         item.u = {
+             nickName: item.nickName,
+             avatar: item.avatar,
+             gender: item.gender
+         };
+         delete item.nickName;
+         delete item.avatar;
+         delete item.gender;
+     })
+ }
+
 function $findAppointByLimit( query, option ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -219,22 +234,10 @@ function $findAppointByLimit( query, option ) {
 
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            // const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`;
-            const str = `select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} left join watcher on watcher.userId = ${query.creatorId} and watcher.appointId = appoint.id WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`;
+            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
 
-            console.log(str);
+            handleAppointData(result);
 
-            const result = await dbQuery(str);
-            result.forEach(item => {
-                item.u = {
-                    nickName: item.nickName,
-                    avatar: item.avatar,
-                    gender: item.gender
-                };
-                delete item.nickName;
-                delete item.avatar;
-                delete item.gender;
-            })
             return resolve(result);
         } catch (err) {
             reject(err)
@@ -242,12 +245,29 @@ function $findAppointByLimit( query, option ) {
     })
 }
 
+function $findJoinAppointByLimit ( uid, option ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (option.startId === -1) {
+                option.startId = 99999999;
+            }
 
+            const result = await dbQuery(`select appoint.*, users.avatar, users.gender, users.nickName from watcher inner join users on users.id = ${uid} inner join appoint on appoint.id = watcher.appointId where watcher.appointId = appoint.id and watcher.userId = ${uid} and watcher.id < ${option.startId} order by id desc limit ${option.size};`);
+
+            handleAppointData(result);
+
+            resolve(result);
+        } catch (err) {
+            reject(err);
+        }
+    })
+}
 
 module.exports = {
     dbQuery,
     $update,
     $insert,
     $findOne,
-    $findAppointByLimit
+    $findAppointByLimit,
+    $findJoinAppointByLimit
 }
