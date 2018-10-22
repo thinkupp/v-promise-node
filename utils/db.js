@@ -234,7 +234,7 @@ function $findAppointByLimit( query, option ) {
 
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
+            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE  deleted = 0 and appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
 
             handleAppointData(result);
 
@@ -252,7 +252,7 @@ function $findJoinAppointByLimit ( uid, option ) {
                 option.startId = 99999999;
             }
 
-            const result = await dbQuery(`select appoint.*, users.avatar, users.gender, users.nickName from watcher inner join users on users.id = ${uid} inner join appoint on appoint.id = watcher.appointId where watcher.appointId = appoint.id and watcher.userId = ${uid} and watcher.id < ${option.startId} order by id desc limit ${option.size};`);
+            const result = await dbQuery(`SELECT appoint.*, users.avatar, users.gender, users.nickName FROM watcher INNER JOIN users on users.id = ${uid} INNER JOIN appoint on appoint.id = watcher.appointId WHERE deleted = 0 AND watcher.appointId = appoint.id AND watcher.userId = ${uid} AND watcher.id < ${option.startId} ORDER BY id desc limit ${option.size};`);
 
             handleAppointData(result);
 
