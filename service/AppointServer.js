@@ -41,9 +41,11 @@ const getAppointDetail = function ( uid, appointId ) {
                 })
             }
 
-            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender from appoint inner join users on users.id = ${uid} where appoint.id = ${appointId}`);
+            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = ${uid} and appointId = ${appointId} inner join users on users.id = ${uid} where appoint.id = ${appointId}`);
             if (result.length) {
                 result = result[0];
+                result.watching = !!result.userId;
+                delete result.userId;
             } else {
                 return reject('未找到数据');
             }

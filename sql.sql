@@ -65,6 +65,7 @@ CREATE TABLE `watcher` (
 `createTime` datetime DEFAULT CURRENT_TIMESTAMP,
 `appointId` int(10) NOT NULL,
 `userId` int(10) NOT NULL,
+`shareBy` int(10) DEFAULT NULL COMMENT `邀请人`,
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
