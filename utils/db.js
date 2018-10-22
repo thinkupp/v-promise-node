@@ -180,50 +180,47 @@ function $findOne( table, query, field ) {
     })
 }
 
-/*
-* @params
-*   table: 表名
-*   query: 查询条件
-*   field: 指定获取字段
-*   option: 分页条件
-*       id: 从某个id开始查
-*       size: 数量
-* */
-
-// function $findByLimit( table, query, field, option = {}, join = '' ) {
-//     return new Promise((resolve, reject) => {
-//         try {
-//             const queryKey = isObject(query);
-//             const optionKey = isObject(option);
-//             const { id = 100000, size = 30 } = option;
-//
-//             if (!table) return reject('不存在的表');
-//             if (!queryKey || !optionKey) return reject('查询参数有误');
-//
-//             let str = handleSelectField(field, table) + join + handleWhereQuery(query) + `AND ${table}.id > ${id} limit ${size}`;
-//
-//             console.log(str);
-//             return resolve(dbQuery(str));
-//         } catch (err) {
-//             reject(err)
-//         }
-//     })
-// }
-
+ /*
+ * 用户信息合并、相关类型转换、状态判断
+ * */
  function handleAppointData( appointData ) {
      appointData.forEach(item => {
          item.onlookers = !!item.onlookers;
          item.private = !!item.private;
+
          item.u = {
              nickName: item.nickName,
              avatar: item.avatar,
              gender: item.gender
          };
+
          delete item.nickName;
          delete item.avatar;
          delete item.gender;
+
+         handleAppointStatus(item);
      })
+
  }
+
+ /*
+ * 当前状态判断
+ * */
+function handleAppointStatus ( item ) {
+    const currentTime = Date.now();
+    item.startTime *= 1000;
+    item.endTime *= 1000;
+
+    // 0 -> 未开始 1 -> 进行中 2 -> 已结束 3 -> 按时完成 4 -> 超时完成
+    let status = 0;
+    if (item.finishTime) {
+        item.finishTime *= 1000;
+        status = item.finishTime > item.endTime ? 4 : 3;
+    } else {
+        status = currentTime < item.startTime ? 0 : currentTime > item.endTime ? 2 : 1;
+    }
+    item.status = status;
+}
 
 function $findAppointByLimit( query, option ) {
     return new Promise(async (resolve, reject) => {
