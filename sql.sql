@@ -46,6 +46,7 @@ CREATE TABLE `appoint` (
  `creatorId` int(10) NOT NULL COMMENT '创建者ID',
  `des` varchar(255) DEFAULT '' COMMENT '描述',
  `title` varchar(20) DEFAULT '' COMMENT '标题',
+ `deleted` tinyint(1) DEFAULT 0 COMMENT '删除状态',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
 
