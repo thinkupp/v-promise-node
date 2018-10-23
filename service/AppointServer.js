@@ -131,6 +131,64 @@ const watchAppoint = function ( uid, appointId ) {
             reject(err)
         }
     })
+};
+
+const supportAppoint = function ( uid, params ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const { support, appointId } = params;
+            if (support === void 0 || appointId === void 0) return reject('参数不完整');
+
+            // 约定是否有效
+            const appoint = await $findOne('appoint', {
+                id: appointId,
+                deleted: 0
+            });
+
+            if (!appoint) return reject('约定不存在或已被创建者删除');
+
+            const currentTime = Date.now();
+
+            // if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
+
+            // 查询是否已有
+            const query = {
+                userId: uid,
+                appointId
+            };
+
+            const record = await $findOne('support', query);
+
+            if (record) {
+                // 更新
+                return reject('不能重复选择');
+            }
+
+
+            // 写入数据到表
+            await $insert('support', {
+                userId: uid,
+                appointId,
+                support
+            });
+
+            // 更新用户字段信息
+            const supportName = support === 0 ? 'unSupport' : 'support';
+            await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1 WHERE id = ${appointId}`);
+
+            // 返回约定的支持者和反对者
+            const result = {
+                support: appoint.support,
+                unSupport: appoint.unSupport
+            };
+            // 将老数据更新
+            result[supportName]++;
+
+            resolve(result);
+        } catch (err) {
+            reject(err)
+        }
+    })
 }
 
 module.exports = {
@@ -138,7 +196,8 @@ module.exports = {
     getAppointDetail,
     getUserCreateAppointList,
     getUserJoinAppointList,
-    watchAppoint
+    watchAppoint,
+    supportAppoint
 }
 
 // select * from lists inner join users on users.id = 100000

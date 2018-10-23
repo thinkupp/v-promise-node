@@ -47,6 +47,9 @@ CREATE TABLE `appoint` (
  `des` varchar(255) DEFAULT '' COMMENT '描述',
  `title` varchar(20) DEFAULT '' COMMENT '标题',
  `deleted` tinyint(1) DEFAULT 0 COMMENT '删除状态',
+ `support` smallint(5) DEFAULT 0 COMMENT '支持数',
+ `unSupport` smallint(5) DEFAULT 0 COMMENT '反对数',
+ `comment` smallint(5) DEFAULT 0 COMMENT '评论数',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
 
@@ -81,3 +84,12 @@ CREATE TABLE `comments` (
 `reply` varchar(255) DEFAULT NULL COMMENT '回复者',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `support` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`support` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否支持',
+`appointId` int(10) NOT NULL,
+`userId` int(10) NOT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

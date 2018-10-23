@@ -58,18 +58,31 @@ router.get('/:id', async function ( ctx ) {
     } catch (err) {
         ctx.throw(400, GlobalServer.handleError(err))
     }
-})
+});
 
 router.post('/watch', async function ( ctx ) {
     const body = ctx.request.body;
     const uid = Number(ctx.request.header.uid);
-    await UserServer.checkUser(uid);
     try {
+        await UserServer.checkUser(uid);
         const result = await AppointServer.watchAppoint(uid, body.appointId);
         ctx.body = result;
     } catch (err) {
         ctx.throw(400, err.toString());
     }
-})
+});
+
+router.post('/support', async function ( ctx ) {
+    try {
+        const body = ctx.request.body;
+        const uid = Number(ctx.request.header.uid);
+        await UserServer.checkUser(uid);
+
+        ctx.body = await AppointServer.supportAppoint(uid, body);
+    } catch (err) {
+        ctx.throw(400, err.toString())
+    }
+
+});
 
 module.exports = router;
