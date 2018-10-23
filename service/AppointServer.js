@@ -45,6 +45,7 @@ const getAppointDetail = function ( uid, appointId ) {
             if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
+                result.isCreator = result.creatorId === Number(uid);
                 delete result.userId;
             } else {
                 return reject('未找到数据');
@@ -152,18 +153,10 @@ const supportAppoint = function ( uid, params ) {
             // if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
 
             // 查询是否已有
-            const query = {
-                userId: uid,
-                appointId
-            };
-
-            const record = await $findOne('support', query);
-
-            if (record) {
+            if (appoint.isSupport !== void 0 && appoint.isSupport !== null) {
                 // 更新
                 return reject('不能重复选择');
             }
-
 
             // 写入数据到表
             await $insert('support', {
@@ -174,7 +167,7 @@ const supportAppoint = function ( uid, params ) {
 
             // 更新用户字段信息
             const supportName = support === 0 ? 'unSupport' : 'support';
-            await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1 WHERE id = ${appointId}`);
+            await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1, isSupport = ${support} WHERE id = ${appointId}`);
 
             // 返回约定的支持者和反对者
             const result = {

@@ -39,7 +39,7 @@ CREATE TABLE `appoint` (
  `startTime` int(10) NOT NULL COMMENT '开始时间',
  `endTime` int(10) NOT NULL COMMENT '结束时间',
  `onlookers` tinyint(1) DEFAULT 1 COMMENT '是否允许围观',
- `private` tinyint(1) DEFAULT 0 COMMENT '/',
+ `private` tinyint(1) DEFAULT 0 COMMENT '是否为私密',
  `effectiveTime` smallint(3) NOT NULL COMMENT '有效时间',
  `autoCreate` varchar(10) NOT NULL COMMENT '自动创建',
  `type` varchar(10) NOT NULL COMMENT '类型',
@@ -50,6 +50,7 @@ CREATE TABLE `appoint` (
  `support` smallint(5) DEFAULT 0 COMMENT '支持数',
  `unSupport` smallint(5) DEFAULT 0 COMMENT '反对数',
  `comment` smallint(5) DEFAULT 0 COMMENT '评论数',
+ `isSupport` tinyint(1) DEFAULT NULL COMMENT '是否支持'
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
 

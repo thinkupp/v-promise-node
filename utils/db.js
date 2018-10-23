@@ -26,36 +26,6 @@ const dbQuery = function (sql, params) {
     })
 };
 
-function handleSelectField ( field, table ) {
-    let str = 'select ';
-    if (!field || Object.prototype.toString.call(field) !== '[object Array]' || field.length < 1) {
-        str += '* '
-    } else {
-        field.forEach((item, index) => {
-            if (index === field.length - 1) {
-                str += `${item} `
-            } else {
-                str += `${item}, `
-            }
-        });
-    }
-
-    return str + 'from ' + table;
-}
-
-function handleWhereQuery ( query ) {
-    let str = ' WHERE';
-    const keys = Object.keys(query);
-    keys.forEach((item, index) => {
-        if (index === 0) {
-            str += ` ${item}=${query[item]} `
-        } else {
-            str += `AND ${item}=${query[item]} `
-        }
-    });
-    return str;
-}
-
 function isObject( obj ) {
     if (!obj || Object.prototype.toString.call(obj) !== '[object Object]') return false;
     return Object.keys(obj);
@@ -101,7 +71,6 @@ function $update( table, query, updateData ) {
         })
     }
 
-    console.log(prefix);
     return dbQuery(prefix, data);
 }
 
