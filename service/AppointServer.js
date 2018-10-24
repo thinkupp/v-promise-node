@@ -321,6 +321,21 @@ const userClockIn = function ( uid, body = {} ) {
     })
 };
 
+const supporters = function ( appointId, type ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!appointId) return reject('错误的ID');
+            if (type === void 0) return reject('请求类型错误');
+            // 检查约定是否有效
+            await checkAppoint(appointId);
+
+            return resolve(dbQuery(`select users.avatar, users.nickName from support, users where support.appointId = ${appointId} and users.id = support.userId and support.support = ${type}`))
+        } catch (err) {
+            reject(err);
+        }
+    })
+}
+
 function checkAppoint( appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -346,5 +361,6 @@ module.exports = {
     getUserJoinAppointList,
     watchAppoint,
     supportAppoint,
-    userClockIn
+    userClockIn,
+    supporters
 }

@@ -46,7 +46,7 @@ router.get('/join', async function ( ctx ) {
     }
 })
 
-router.get('/:id', async function ( ctx ) {
+router.get('/detail/:id', async function ( ctx ) {
     const id = ctx.params.id;
     if (!id) return ctx.throw(400, '错误的ID');
     const uid = Number(ctx.request.header.uid);
@@ -94,6 +94,30 @@ router.post('/clock-in', async function ( ctx ) {
     } catch (err) {
         ctx.throw(400, err.toString())
     }
-})
+});
+
+router.get('/supporters', async function ( ctx ) {
+    try {
+        const uid = Number(ctx.request.header.uid);
+        await UserServer.checkUser(uid);
+        const appointId = ctx.request.query.appoint_id;
+
+        ctx.body = await AppointServer.supporters(appointId, 1);
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+});
+
+router.get('/un-supporters', async function ( ctx ) {
+    try {
+        const uid = Number(ctx.request.header.uid);
+        await UserServer.checkUser(uid);
+        const appointId = ctx.request.query.appoint_id;
+
+        ctx.body = await AppointServer.supporters(appointId, 0);
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+});
 
 module.exports = router;

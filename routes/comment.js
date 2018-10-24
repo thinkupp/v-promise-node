@@ -6,7 +6,7 @@ router.prefix('/api/comment');
 router.post('/', async function ( ctx ) {
     try {
         const body = ctx.request.body;
-        const uid = ctx.request.header.uid;
+        const uid = Number(ctx.request.header.uid);
         await UsersServer.checkUser(uid);
 
         ctx.body = await CommentServer.publishComment(uid, body);
