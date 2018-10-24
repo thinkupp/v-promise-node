@@ -27,6 +27,19 @@ router.get('/:id', async function ( ctx ) {
     } catch (err) {
         ctx.throw(400, err.toString())
     }
+});
+
+router.post('/like', async function ( ctx ) {
+    try {
+        const uid = ctx.request.header.uid;
+        await UsersServer.checkUser(uid);
+
+        const body = ctx.request.body;
+        ctx.body = await CommentServer.commentLike(uid, body);
+
+    } catch (err) {
+        ctx.throw(400, err.toString())
+    }
 })
 
 module.exports = router;
