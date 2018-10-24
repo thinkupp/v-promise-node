@@ -7,8 +7,7 @@ const publishComment = function ( uid, params ) {
             if (!appointId || !content) return reject('参数不正确');
 
             // 检查约定状态
-            const appoint = await checkAppoint(appointId);
-
+            await checkAppoint(appointId);
             // 检查用户是否有权评论 * 暂定所有人都可以评论
             // if (uid !== appoint.creatorId) {
             //     // 如果不是创建者则检查是否是监督者
@@ -17,7 +16,6 @@ const publishComment = function ( uid, params ) {
             //         return reject('只有监督者才可以发表评论！')
             //     }
             // }
-
             const r = await $insert('comments', {
                 appointId,
                 content,
@@ -43,7 +41,7 @@ const getAppointComments = function ( uid, appointId, params ) {
                 startId += 1;
             }
 
-            const result = await dbQuery(`select comment_like.id as isLike, comments.id, comments.content, comments.userId, comments.createTime, comments.parise, users.avatar, users.nickName from comments left join comment_like on comment_like.commentId = comments.id and comment_like.userId = ${uid} inner join users on users.id = ${uid} WHERE comments.appointId = ${appointId} AND comments.userId = ${uid} AND comments.ban = 0 AND comments.id < ${startId} order by createTime desc limit ${size}`);
+            const result = await dbQuery(`SELECT comment_like.id AS isLike, comments.id, comments.content, comments.userId, comments.createTime, comments.parise, users.avatar, users.nickName FROM comments LEFT JOIN comment_like ON comment_like.commentId = comments.id AND comment_like.userId = ${uid} INNER JOIN users ON users.id = ${uid} WHERE comments.appointId = ${appointId} AND comments.userId = ${uid} AND comments.ban = 0 AND comments.id < ${startId} ORDER BY createTime DESC LIMIT ${size}`);
 
             result.isLike = !!result.isLike;
             resolve(result);
