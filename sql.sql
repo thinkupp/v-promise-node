@@ -34,8 +34,8 @@ CREATE TABLE `appoint` (
  `images` blob DEFAULT NULL COMMENT '图片列表',
  `watcherMax` smallint(3) NOT NULL DEFAULT 0 COMMENT '监督者上限, 0不限制',
  `watcherNumber` smallint(3) DEFAULT 0 COMMENT '监督者数量',
- `accessNumber` smallint(6) DEFAULT 0 COMMENT '访问量',
- `visitNumber` smallint(6) DEFAULT 0 COMMENT '浏览人次',
+ `access` smallint(5) DEFAULT 0 COMMENT '访问量',
+ `visit` smallint(5) DEFAULT 0 COMMENT '浏览人次',
  `startTime` int(10) NOT NULL COMMENT '开始时间',
  `endTime` int(10) NOT NULL COMMENT '结束时间',
  `onlookers` tinyint(1) DEFAULT 1 COMMENT '是否允许围观',
@@ -60,7 +60,7 @@ CREATE TABLE `visit` (
 `appointId` int(10) NOT NULL COMMENT '访问的id',
 `userId` int(10) NOT NULL COMMENT '访问者id',
 `lastVisitTime` int(11) NOT NULL COMMENT '最后一次访问时间',
-`visitNumber` smallint(5) DEFAULT 1 COMMENT '访问次数',
+`number` smallint(5) DEFAULT 1 COMMENT '访问次数',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='访问记录表';
 
@@ -94,3 +94,14 @@ CREATE TABLE `support` (
 `userId` int(10) NOT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `error_log` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`type` smallint(3) NOT NULL COMMENT '错误类型',
+`des` varchar(255) NOT NULL COMMENT '错误描述',
+`api` varchar(100) DEFAULT NULL COMMENT 'api地址',
+`userId` int(10) NOT NULL,
+`appointId` int(10) DEFAULT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='错误收集表';

@@ -1,6 +1,7 @@
 const { dbQuery, $update, $findOne, $insert, $findAppointByLimit, $findJoinAppointByLimit } = require('../utils/db');
-const types = require('../utils/types')
-const { getCurrentTime } = require('../utils');
+const types = require('../utils/types');
+const ErrorLogServer = require('./ErrorLogServer');
+const { getCurrentTime, formatTime, calcTime } = require('../utils');
 
 const createAppoint = function ( uid, params ) {
     params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
@@ -19,12 +20,12 @@ const getAppointDetail = function ( uid, appointId ) {
                     userId: uid,
                     appointId
                 }, {
-                    visitNumber: 'visitNumber + 1' + types.SPECIAL_SET_VALUE,
+                    number: 'number + 1' + types.SPECIAL_SET_VALUE,
                     lastVisitTime: getCurrentTime()
                 });
                 // 增加访问量
                 await $update('appoint', { id: appointId }, {
-                    accessNumber: 'accessNumber + 1' + types.SPECIAL_SET_VALUE
+                    access: 'access + 1' + types.SPECIAL_SET_VALUE
                 })
             } else {
                 await $insert('visit', {
@@ -36,8 +37,8 @@ const getAppointDetail = function ( uid, appointId ) {
                 await $update('appoint', {
                     id: appointId
                 }, {
-                    visitNumber: 'visitNumber + 1' + types.SPECIAL_SET_VALUE,
-                    accessNumber: 'accessNumber + 1' + types.SPECIAL_SET_VALUE
+                    visit: 'visit + 1' + types.SPECIAL_SET_VALUE,
+                    access: 'access + 1' + types.SPECIAL_SET_VALUE
                 })
             }
 
@@ -116,7 +117,7 @@ const watchAppoint = function ( uid, appointId ) {
             if (currentTime < result.startTime) {
                 return reject('约定未开启');
             }
-            if (currentTime > result.endTime) {
+            if (currentTime > result.endTime || result.finishTime) {
                 return reject('约定已结束')
             }
             // 是否已经满员
@@ -182,6 +183,93 @@ const supportAppoint = function ( uid, params ) {
             reject(err)
         }
     })
+};
+
+const userClockIn = function ( uid, body = {} ) {
+    return new Promise(async (resolve, reject) => {
+        const api = '/clock-in POST';
+        try {
+            if (!body.appointId) {
+                ErrorLogServer.appointErrorLog.appointIdError({
+                    api,
+                    uid,
+                    appointId: body.appointId || 'undefined'
+                });
+                return reject('错误的约定ID');
+            }
+
+            // 检测约定是否有效
+            const appoint = await checkAppoint(body.appointId, api);
+
+            // 检查是否为创建者
+            if (appoint.creatorId !== uid) {
+                const des = `创建者id：${appoint.creatorId}，打卡者id：${uid}`;
+                ErrorLogServer.appointErrorLog.clockInError({
+                    type: 3,
+                    appointId: body.appointId,
+                    uid,
+                    api,
+                    des
+                });
+
+                return reject('只有创建者才可以打卡！');
+            }
+
+            // 是否已经打卡
+            if (appoint.finishTime) {
+                const des = `该约定已经打卡了，打卡时间为：${formatTime(appoint.finishTime * 1000)}`;
+                ErrorLogServer.appointErrorLog.clockInError({
+                    type: 2,
+                    appointId: body.appointId,
+                    uid,
+                    api,
+                    des
+                });
+
+                return reject('您已经打卡')
+            }
+
+            // 检测是否已经超时或未开始
+            const currentTime = Date.now();
+            const startTime = appoint.startTime * 1000;
+            if (currentTime < startTime) {
+                const des = `约定开始时间：${formatTime(startTime)}，请求打卡时间：${formatTime(currentTime)}，提前了 ${calcTime(startTime, currentTime)}`;
+                ErrorLogServer.appointErrorLog.clockInError({
+                    type: 0,
+                    appointId: body.appointId,
+                    uid,
+                    api,
+                    des
+                });
+                return reject('约定未开始，稍等会再来');
+            }
+                // 【超时打卡】暂不处理，暂时允许创建者超时打卡
+
+            // 打卡
+            await dbQuery(`update appoint SET finishTime = ? where id = ${body.appointId}`, [ getCurrentTime(currentTime) ]);
+            resolve();
+        } catch (err) {
+            reject(err);
+        }
+    })
+};
+
+function checkAppoint( appointId ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let appoint = await dbQuery(`select * from appoint where id = ${appointId}`);
+            if (!appoint.length) {
+                return reject('约定不存在')
+            }
+            appoint = appoint[0];
+            if (appoint.deleted) {
+                return reject('约定已被作者删除')
+            }
+            resolve(appoint)
+        } catch (err) {
+            reject(err);
+        }
+    })
 }
 
 module.exports = {
@@ -190,7 +278,6 @@ module.exports = {
     getUserCreateAppointList,
     getUserJoinAppointList,
     watchAppoint,
-    supportAppoint
+    supportAppoint,
+    userClockIn
 }
-
-// select * from lists inner join users on users.id = 100000

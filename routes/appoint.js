@@ -82,7 +82,18 @@ router.post('/support', async function ( ctx ) {
     } catch (err) {
         ctx.throw(400, err.toString())
     }
-
 });
+
+router.post('/clock-in', async function ( ctx ) {
+    try {
+        const body = ctx.request.body;
+        const uid = Number(ctx.request.header.uid);
+        await UserServer.checkUser(uid);
+        await AppointServer.userClockIn(uid, body);
+        ctx.body = {};
+    } catch (err) {
+        ctx.throw(400, err.toString())
+    }
+})
 
 module.exports = router;
