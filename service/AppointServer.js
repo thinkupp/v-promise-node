@@ -49,6 +49,13 @@ const getAppointDetail = function ( uid, appointId ) {
                 result.isCreator = result.creatorId === Number(uid);
                 delete result.userId;
             } else {
+                const api = '/appoint/:id GET';
+                ErrorLogServer.appointErrorLog.fetchAppointDetailError({
+                    api,
+                    uid,
+                    appointId,
+                    dsc: `查询条件：select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = ${uid} and appointId = ${appointId} inner join users on users.id = ${uid} where appoint.id = ${appointId}`
+                });
                 return reject('未找到数据');
             }
 
@@ -100,24 +107,84 @@ const getUserJoinAppointList = function ( uid, query ) {
 
 const watchAppoint = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
+        const api = '/appoint/watch POST';
         try {
-            if ( !appointId ) return reject('错误的约定ID');
+            if ( !appointId ) {
+                ErrorLogServer.appointErrorLog.appointIdError({
+                    api,
+                    uid,
+                    appointId
+                });
+                return reject('错误的约定ID');
+            }
             let result = await dbQuery(`select deleted, creatorId, startTime, endTime, watcherNumber, watcherMax from appoint where appoint.id = ${appointId}`);
             // 约定是否存在
-            if (!result.length) return reject('约定不存在');
+            if (!result.length) {
+                ErrorLogServer.appointErrorLog.fetchAppointDetailError({
+                    type: 8,
+                    api,
+                    uid,
+                    appointId,
+                    des: `查询条件：select deleted, creatorId, startTime, endTime, watcherNumber, watcherMax from appoint where appoint.id = ${appointId}`
+                });
+                return reject('约定不存在');
+            }
             // 约定是否已被删除
-            if (result.deleted) return reject('此约定已被创建者删除');
+            if (result.deleted) {
+                ErrorLogServer.appointErrorLog.fetchAppointDetailError({
+                    type: 7,
+                    api,
+                    uid,
+                    appointId,
+                    des: '该约定已被创建者删除，可能是通过分享访问的'
+                })
+                return reject('此约定已被创建者删除');
+            }
             result = result[0];
-            if (uid === result.creatorId) return reject('创建者不能监督自己的约定');
+            if (uid === result.creatorId) {
+                ErrorLogServer.appointErrorLog.watchError({
+                    type: 9,
+                    uid,
+                    appointId,
+                    des: '检查是否是前端代码Bug导致监督者能访问这个按钮，如果不是则可能是有人通过工具模拟访问',
+                    api
+                });
+                return reject('创建者不能监督自己的约定');
+            }
             // 查询是否已经监督
             const record = await dbQuery(`select id from watcher where userId = ${uid} and appointId = ${appointId}`);
-            if (record.length) return reject('您已是监督者');
+            if (record.length) {
+                ErrorLogServer.appointErrorLog.watchError({
+                    type: 10,
+                    uid,
+                    appointId,
+                    des: '检查是否是前端代码Bug导致已监督后还能访问这个按钮，如果不是可能是有人通过工具模拟访问，查询条件:',
+                    api
+                });
+                return reject('您已是监督者');
+            }
             // 是否已经开始
             const currentTime = Date.now();
-            if (currentTime < result.startTime) {
+            const startTime = result.startTime * 1000;
+            if (currentTime < startTime) {
+                ErrorLogServer.appointErrorLog.watchError({
+                    type: 11,
+                    uid,
+                    appointId,
+                    des: `开始时间：${formatTime(startTime)}，请求访问时间：${currentTime}，相差：${calcTime(currentTime, startTime)}`,
+                    api
+                });
                 return reject('约定未开启');
             }
-            if (currentTime > result.endTime || result.finishTime) {
+            const endTime = result.endTime * 1000;
+            if (currentTime > endTime || result.finishTime) {
+                ErrorLogServer.appointErrorLog.watchError({
+                    type: 12,
+                    uid,
+                    appointId,
+                    des: `结束时间：${formatTime(endTime)}，请求访问时间：${currentTime}，相差：${calcTime(currentTime, startTime)}`,
+                    api
+                });
                 return reject('约定已结束')
             }
             // 是否已经满员
@@ -151,7 +218,7 @@ const supportAppoint = function ( uid, params ) {
 
             const currentTime = Date.now();
 
-            // if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
+            if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
 
             // 查询是否已有
             if (appoint.isSupport !== void 0 && appoint.isSupport !== null) {
@@ -187,7 +254,7 @@ const supportAppoint = function ( uid, params ) {
 
 const userClockIn = function ( uid, body = {} ) {
     return new Promise(async (resolve, reject) => {
-        const api = '/clock-in POST';
+        const api = '/appoint/clock-in POST';
         try {
             if (!body.appointId) {
                 ErrorLogServer.appointErrorLog.appointIdError({
