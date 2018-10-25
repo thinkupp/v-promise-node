@@ -6,6 +6,7 @@ const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser');
 const logger = require('koa-logger');
 const path = require('path');
+const UserServer = require('./service/UsersServer');
 
 const koaBody = require('koa-body');
 app.use(koaBody({
@@ -58,6 +59,12 @@ app.use(async (ctx, next) => {
     const ms = new Date() - start
     console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);
     try {
+        const noAuth = ['/api/users/login'];
+        if (noAuth.includes(ctx.url)) {
+            return await next()
+        }
+        await UserServer.checkUser(ctx.request.header.uid);
+        ctx.request.header.uid = Number(ctx.request.header.uid);
         await next()
     } catch (err) {
         ctx.response.status = err.statusCode || err.status || 500;

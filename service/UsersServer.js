@@ -3,7 +3,7 @@ const ApiServer = require('./ApiServer');
 const { $update, $findOne, $insert, dbQuery } = require('../utils/db');
 const types = require('../utils/types');
 
-const checkUserStatus = function ( code, loginStatus ) {
+const checkUserStatus = function ( {code, loginStatus} ) {
     const { appid, secret } = WeChatServer.getWeChatInfo();
 
     return new Promise(async (resolve, reject) => {
@@ -127,12 +127,28 @@ const userAccessRecord = function( uid, params ) {
 const checkUser = function ( uid ) {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!uid) reject('错误的ID');
+            if (!uid) reject({
+                status: 400,
+                message: '错误的访问'
+            });
+
             const u = await $findOne('users', {id: uid});
             if (u) return resolve();
-            reject('用户不存在');
+            reject({
+                status: 400,
+                message: '用户不存在'
+            });
         } catch (err) {
-            reject(err)
+            if (typeof err === 'string') {
+                reject({
+                    status: 400,
+                    message: err
+                })
+            } else {
+                reject({
+                    message: err.toString()
+                })
+            }
         }
     })
 };

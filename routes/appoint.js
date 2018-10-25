@@ -8,7 +8,6 @@ router.get('/create', async function ( ctx ) {
     try {
         const query = ctx.request.query;
         const uid = ctx.request.header.uid;
-        await UserServer.checkUser( uid );
         // 查询用户创建
         ctx.body = await AppointServer.getUserCreateAppointList( uid, query );
     } catch (err) {
@@ -19,7 +18,6 @@ router.get('/create', async function ( ctx ) {
 router.post('/create', async function ( ctx ) {
     const body = ctx.request.body;
     const uid = Number(ctx.request.header.uid);
-    await UserServer.checkUser( uid );
 
     try {
         const result = await AppointServer.createAppoint( uid, body );
@@ -37,10 +35,7 @@ router.get('/join', async function ( ctx ) {
     try {
         const query = ctx.request.query;
         const uid = Number(ctx.request.header.uid);
-        await UserServer.checkUser(uid);
-
-        const result = await AppointServer.getUserJoinAppointList(uid, query);
-        ctx.body = result;
+        ctx.body = await AppointServer.getUserJoinAppointList(uid, query);
     } catch (err) {
         ctx.throw(400, err.toString())
     }
@@ -50,7 +45,6 @@ router.get('/detail/:id', async function ( ctx ) {
     const id = ctx.params.id;
     if (!id) return ctx.throw(400, '错误的ID');
     const uid = Number(ctx.request.header.uid);
-    await UserServer.checkUser( uid );
 
     try {
         const r = await AppointServer.getAppointDetail( uid, id );
@@ -64,9 +58,7 @@ router.post('/watch', async function ( ctx ) {
     const body = ctx.request.body;
     const uid = Number(ctx.request.header.uid);
     try {
-        await UserServer.checkUser(uid);
-        const result = await AppointServer.watchAppoint(uid, body.appointId);
-        ctx.body = result;
+        ctx.body = await AppointServer.watchAppoint(uid, body.appointId);
     } catch (err) {
         ctx.throw(400, err.toString());
     }
@@ -76,8 +68,6 @@ router.post('/support', async function ( ctx ) {
     try {
         const body = ctx.request.body;
         const uid = Number(ctx.request.header.uid);
-        await UserServer.checkUser(uid);
-
         ctx.body = await AppointServer.supportAppoint(uid, body);
     } catch (err) {
         ctx.throw(400, err.toString())
@@ -88,7 +78,6 @@ router.post('/clock-in', async function ( ctx ) {
     try {
         const body = ctx.request.body;
         const uid = Number(ctx.request.header.uid);
-        await UserServer.checkUser(uid);
         await AppointServer.userClockIn(uid, body);
         ctx.body = {};
     } catch (err) {
@@ -99,7 +88,6 @@ router.post('/clock-in', async function ( ctx ) {
 router.get('/supporters', async function ( ctx ) {
     try {
         const uid = Number(ctx.request.header.uid);
-        await UserServer.checkUser(uid);
         const appointId = ctx.request.query.appoint_id;
 
         ctx.body = await AppointServer.supporters(appointId, 1);
@@ -115,6 +103,14 @@ router.get('/un-supporters', async function ( ctx ) {
         const appointId = ctx.request.query.appoint_id;
 
         ctx.body = await AppointServer.supporters(appointId, 0);
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+});
+
+router.post('/tip-off', async function ( ctx ) {
+    try {
+
     } catch (err) {
         ctx.throw(400, err.toString());
     }
