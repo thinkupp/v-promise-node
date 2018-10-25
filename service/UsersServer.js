@@ -106,7 +106,7 @@ const userAccessRecord = function( uid, params ) {
             if (startId === -1) startId = 999999;
 
             // 根据用户ID查出所有的访问记录
-            const result = await dbQuery(`select appoint.id, appoint.startTime, appoint.createTime, appoint.finishTime, appoint.type, users.avatar, users.nickName, visit.lastVisitTime from visit, appoint, users where visit.userId = ${uid} and appoint.id = visit.appointId and users.id = appoint.creatorId and visit.id < ${startId} order by visit.lastVisitTime desc limit ${size}`);
+            const result = await dbQuery(`select appoint.id, appoint.startTime, appoint.createTime, appoint.finishTime, appoint.type, users.avatar, users.nickName, visit.lastVisitTime from visit, appoint, users where visit.userId = ${uid} and and visit.deleted = 0 and appoint.id = visit.appointId and users.id = appoint.creatorId and visit.id < ${startId} order by visit.lastVisitTime desc limit ${size}`);
 
             // 计算任务状态
             result.forEach(record => {
@@ -123,6 +123,23 @@ const userAccessRecord = function( uid, params ) {
         }
     })
 };
+
+/*
+* 删除用户访问记录
+* @params
+*   body
+*       access_record_id
+* */
+const removeAccessRecord = function ( visit_id ) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!visit_id) return reject('错误的请求');
+            resolve(dbQuery(`update table visit SET delete = 1 where id = ${visit_id}`));
+        } catch (err) {
+            reject(err)
+        }
+    })
+}
 
 const checkUser = function ( uid ) {
     return new Promise(async (resolve, reject) => {
@@ -157,5 +174,6 @@ module.exports = {
     checkUserStatus,
     register,
     checkUser,
-    userAccessRecord
+    userAccessRecord,
+    removeAccessRecord
 }

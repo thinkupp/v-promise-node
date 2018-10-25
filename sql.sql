@@ -60,6 +60,7 @@ CREATE TABLE `visit` (
 `userId` int(10) NOT NULL COMMENT '访问者id',
 `lastVisitTime` int(11) NOT NULL COMMENT '最后一次访问时间',
 `number` smallint(5) DEFAULT 1 COMMENT '访问次数',
+`deleted` tinyint(1) DEFAULT 0,
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='访问记录表';
 
@@ -112,12 +113,3 @@ CREATE TABLE `error_log` (
 `appointId` int(10) DEFAULT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='错误收集表';
-
-CREATE TABLE `access_record` (
-`id` int(10) NOT NULL AUTO_INCREMENT,
-`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
-`appointId` int(10) NOT NULL,
-`userId` int(10) NOT NULL,
-`updateTime` int(10) NOT NULL,
-PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='访问记录表';

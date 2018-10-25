@@ -14,7 +14,6 @@ router.post('/register', async function ( ctx ) {
     try {
         const uid = ctx.request.header.uid;
         const body = ctx.request.body;
-
         ctx.body = await UsersServer.register( uid, body );
     } catch (err) {
         ctx.throw( 400, err.toString() )
@@ -33,7 +32,9 @@ router.post('/access-record', async function ( ctx ) {
 
 router.delete('/access-record', async function ( ctx ) {
     try {
-        const uid = Number(ctx.request.header.uid);
+        const { access_record_id } = ctx.request.body;
+        ctx.body = await UsersServer.removeAccessRecord( access_record_id );
+
     } catch (err) {
         ctx.throw(400, err.toString());
     }
