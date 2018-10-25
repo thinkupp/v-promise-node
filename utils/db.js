@@ -152,45 +152,28 @@ function $findOne( table, query, field ) {
  /*
  * 用户信息合并、相关类型转换、状态判断
  * */
- function handleAppointData( appointData ) {
+ function handleAppointData( appointData, handleU = true ) {
      appointData.forEach(item => {
          item.onlookers = !!item.onlookers;
          item.private = !!item.private;
 
-         item.u = {
-             nickName: item.nickName,
-             avatar: item.avatar,
-             gender: item.gender
-         };
+         if (handleU) {
+             item.u = {
+                 nickName: item.nickName,
+                 avatar: item.avatar,
+                 gender: item.gender
+             };
 
-         delete item.nickName;
-         delete item.avatar;
-         delete item.gender;
-         delete item.deleted;
+             delete item.nickName;
+             delete item.avatar;
+             delete item.gender;
+             delete item.deleted;
+         }
 
-         handleAppointStatus(item);
+         item.calcAppointStatus();
      })
 
  }
-
- /*
- * 当前状态判断
- * */
-function handleAppointStatus ( item ) {
-    const currentTime = Date.now();
-    item.startTime *= 1000;
-    item.endTime *= 1000;
-
-    // 0 -> 未开始 1 -> 进行中 2 -> 已结束 3 -> 按时完成 4 -> 超时完成
-    let status = 0;
-    if (item.finishTime) {
-        item.finishTime *= 1000;
-        status = item.finishTime > item.endTime ? 4 : 3;
-    } else {
-        status = currentTime < item.startTime ? 0 : currentTime > item.endTime ? 2 : 1;
-    }
-    item.status = status;
-}
 
 function $findAppointByLimit( query, option ) {
     return new Promise(async (resolve, reject) => {
@@ -201,9 +184,9 @@ function $findAppointByLimit( query, option ) {
 
             if (!queryKey || !optionKey) return reject('查询参数有误');
 
-            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint inner join users on users.id = ${query.creatorId} WHERE  deleted = 0 and appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
+            const result = await dbQuery(`select appoint.* from appoint WHERE  deleted = 0 and appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
 
-            handleAppointData(result);
+            handleAppointData(result, false);
 
             return resolve(result);
         } catch (err) {

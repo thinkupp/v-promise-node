@@ -24,13 +24,22 @@ router.post('/register', async function ( ctx ) {
         const uid = ctx.request.header.uid;
         await UsersServer.checkUser( uid );
         const body = ctx.request.body;
-        const result = await UsersServer.register( uid, body );
-        if ( !result ) ctx.throw( 400, '注册失败' );
 
-        ctx.body = {}
+        ctx.body = await UsersServer.register( uid, body );
     } catch (err) {
         console.log(err, 'register error');
         ctx.throw( 400, err )
+    }
+});
+
+router.post('/access-record', async function ( ctx ) {
+    try {
+        const uid = Number(ctx.request.header.uid);
+        await UsersServer.checkUser(uid);
+        const body = ctx.request.body;
+        ctx.body = await UsersServer.userAccessRecord(uid, body);
+    } catch (err) {
+        ctx.throw(400, err.toString());
     }
 });
 

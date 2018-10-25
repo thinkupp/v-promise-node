@@ -76,6 +76,9 @@ const getAppointDetail = function ( uid, appointId ) {
                 result.status = currentTime < result.startTime ? 0 : currentTime > result.endTime ? 2 : 1;
             }
 
+            result.onlookers = !!result.onlookers;
+            result.private = !!result.private;
+
             result.u = {
                 avatar: result.avatar,
                 nickName: result.nickName,
@@ -85,7 +88,6 @@ const getAppointDetail = function ( uid, appointId ) {
             delete result.nickName;
             delete result.gender;
 
-            // 查询该约定
             resolve(result)
         } catch (err) {
             reject(err);

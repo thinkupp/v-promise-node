@@ -1,6 +1,6 @@
 const WeChatServer = require('./WeChatServer');
 const ApiServer = require('./ApiServer');
-const { $update, $findOne, $insert } = require('../utils/db');
+const { $update, $findOne, $insert, dbQuery } = require('../utils/db');
 const types = require('../utils/types');
 
 const checkUserStatus = function ( code, loginStatus ) {
@@ -13,10 +13,9 @@ const checkUserStatus = function ( code, loginStatus ) {
 
             const { session_key, openid } = result;
 
-            // 如果用户存在，更新用户最后登录时间
-            let u = await $findOne('users', {
-                openid
-            }, ['id', 'openid', 'registerTime']);
+            let u = await dbQuery(`select id, ban, registerTime, avatar, nickName from users where openid = ?`, [ openid ]);
+
+            u = u[0];
 
             if ( u ) {
                 if (u.registerTime) {
@@ -45,7 +44,11 @@ const checkUserStatus = function ( code, loginStatus ) {
             resolve({
                 ban: !!u.ban,
                 regStatus: !!u.registerTime,
-                id: u.id
+                id: u.id,
+                u: {
+                    avatar: u.avatar,
+                    nickName: u.nickName
+                }
             });
         } catch (err) {
             reject( err )
@@ -66,7 +69,7 @@ const register = function ( id, data ) {
             if (!uSession) return reject( 'session key error' );
 
             const userInfo = await WeChatServer.decryptData( about.appid, uSession.session_key, encryptedData, iv );
-            return resolve($update('users', { id }, {
+            await $update('users', { id }, {
                 nickName: userInfo.nickName,
                 gender: userInfo.gender,
                 avatar: userInfo.avatarUrl,
@@ -76,9 +79,47 @@ const register = function ( id, data ) {
                 openid: userInfo.openId,
                 unionid: userInfo.unionid || '',
                 registerTime: parseInt(Date.now() / 1000)
-            }))
+            });
+            return resolve({
+                u: {
+                    avatar: userInfo.avatarUrl,
+                    nickName: userInfo.nickName
+                }
+            })
         } catch (err) {
             reject (err);
+        }
+    })
+};
+
+/*
+* 获取用户访问记录
+* @params
+*   body
+*       startId 开始查询的ID
+*       size 数量
+* */
+const userAccessRecord = function( uid, params ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let { startId = 999999, size = 30 } = params;
+            if (startId === -1) startId = 999999;
+
+            // 根据用户ID查出所有的访问记录
+            const result = await dbQuery(`select appoint.id, appoint.startTime, appoint.createTime, appoint.finishTime, appoint.type, users.avatar, users.nickName, visit.lastVisitTime from visit, appoint, users where visit.userId = ${uid} and appoint.id = visit.appointId and users.id = appoint.creatorId and visit.id < ${startId} order by visit.lastVisitTime desc limit ${size}`);
+
+            // 计算任务状态
+            result.forEach(record => {
+                record.calcAppointStatus();
+                delete record.startTime;
+                delete record.endTime;
+                delete record.finishTime;
+            });
+
+            resolve(result);
+
+        } catch (err) {
+            reject(err);
         }
     })
 };
@@ -99,5 +140,6 @@ const checkUser = function ( uid ) {
 module.exports = {
     checkUserStatus,
     register,
-    checkUser
+    checkUser,
+    userAccessRecord
 }

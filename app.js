@@ -24,6 +24,22 @@ app.use(koaBody({
 // error handler
 onerror(app)
 
+/*
+* 自定义方法：计算约定状态
+* */
+Object.prototype.calcAppointStatus = function () {
+    this.startTime *= 1000;
+    this.endTime *= 1000;
+    // 0 -> 未开始 1 -> 进行中 2 -> 已结束 3 -> 按时完成 4 -> 超时完成
+    if (this.finishTime) {
+        this.finishTime *= 1000;
+        this.status = this.finishTime > this.endTime ? 4 : 3;
+    } else {
+        const currentTime = Date.now();
+        this.status = currentTime < this.startTime ? 0 : currentTime > this.endTime ? 2 : 1;
+    }
+};
+
 // middlewares
 app.use(bodyparser({
     enableTypes: ['json', 'form', 'text']

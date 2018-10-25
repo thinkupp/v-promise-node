@@ -41,7 +41,6 @@ CREATE TABLE `appoint` (
  `onlookers` tinyint(1) DEFAULT 1 COMMENT '是否允许围观',
  `private` tinyint(1) DEFAULT 0 COMMENT '是否为私密',
  `effectiveTime` smallint(3) NOT NULL COMMENT '有效时间',
- `autoCreate` varchar(10) NOT NULL COMMENT '自动创建',
  `type` varchar(10) NOT NULL COMMENT '类型',
  `creatorId` int(10) NOT NULL COMMENT '创建者ID',
  `des` varchar(255) DEFAULT '' COMMENT '描述',
@@ -113,3 +112,12 @@ CREATE TABLE `error_log` (
 `appointId` int(10) DEFAULT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='错误收集表';
+
+CREATE TABLE `access_record` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`appointId` int(10) NOT NULL,
+`userId` int(10) NOT NULL,
+`updateTime` int(10) NOT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='访问记录表';
