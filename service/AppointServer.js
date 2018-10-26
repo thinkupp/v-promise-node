@@ -82,6 +82,9 @@ const getUserJoinAppointList = function ( uid, query ) {
     return $findJoinAppointByLimit(uid, query);
 };
 
+/*
+* 监督某约定
+*/
 const watchAppoint = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         const api = '/appoint/watch POST';
@@ -179,6 +182,9 @@ const watchAppoint = function ( uid, appointId ) {
     })
 };
 
+/*
+* 支持某个约定 
+*/
 const supportAppoint = function ( uid, params ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -229,6 +235,9 @@ const supportAppoint = function ( uid, params ) {
     })
 };
 
+/*
+* 打卡
+*/
 const userClockIn = function ( uid, body = {} ) {
     return new Promise(async (resolve, reject) => {
         const api = '/appoint/clock-in POST';
@@ -298,6 +307,9 @@ const userClockIn = function ( uid, body = {} ) {
     })
 };
 
+/*
+* 返回某约定的支持者/反对者
+*/
 const supporters = function ( appointId, type ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -313,6 +325,9 @@ const supporters = function ( appointId, type ) {
     })
 };
 
+/*
+* 所有约定分页查询
+*/
 const allAppoint = function ( params = {} ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -335,25 +350,25 @@ const allAppoint = function ( params = {} ) {
 const updateAppoint = function ( data ) {
     return new Promise(async (resolve, reject) => {
 		try {
-			const appointId = data.id;
-			delete data.id;
-			// 计算结束时间
-			const endTime = data.startTime + data.effectiveTime * 60 * 1000;
-			data.endTime = getCurrentTime(endTime);
-			data.startTime = getCurrentTime(data.startTime);
-	    	await checkAppoint(appointId);
-  	   		await $update('appoint', {id: appointId}, data);
-	    	resolve({id: appointId});
-		} catch (err) {
-	    	reject(err);
-		}
-    })
+				const appointId = data.id;
+				delete data.id;
+		  	// 计算结束时间
+				const endTime = data.startTime + data.effectiveTime * 60 * 1000;
+				data.endTime = getCurrentTime(endTime);
+				data.startTime = getCurrentTime(data.startTime);
+	   	  await checkAppoint(appointId);
+  	 	  await $update('appoint', {id: appointId}, data);
+	   	  resolve({id: appointId});
+			} catch (err) {
+	    		reject(err);
+			}
+		})
 }
 
 function checkAppoint( appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
-	    if(!appointId) return reject("错误的访问");
+	  			  if(!appointId) return reject("错误的访问");
             let appoint = await dbQuery(`select * from appoint where id = ${appointId}`);
             if (!appoint.length) {
                 return reject('约定不存在')
@@ -379,5 +394,6 @@ module.exports = {
     userClockIn,
     supporters,
     allAppoint,
-	updateAppoint
+	updateAppoint,
+    updateAppoint
 }
