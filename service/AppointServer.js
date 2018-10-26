@@ -329,9 +329,26 @@ const allAppoint = function ( params = {} ) {
     })
 }
 
+/*
+* 更新约定信息
+*/
+const updateAppoint = function (uid, data) {
+    return new Promise((resolve, reject) => {
+		try {
+			const appointId = data.id;
+			delete data.id;
+	    	await checkAppoint(appointId);
+	    	resolve($update('appoint', {id: appointId}, data));
+		} catch (err) {
+	    	reject(err);
+		}
+    })
+}
+
 function checkAppoint( appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
+	    if(!appointId) return reject("错误的访问");
             let appoint = await dbQuery(`select * from appoint where id = ${appointId}`);
             if (!appoint.length) {
                 return reject('约定不存在')
