@@ -1,7 +1,7 @@
 const getWeChatInfo = function () {
     return {
-        appid: 'wx5673da08b2521198',
-        secret: 'bce6ebe8ba083ef9ff4eacfed8b55a3e'
+        appid: 'wx79ad98ff036bd661',
+        secret: '3c17a6cf762e28db59b9054bd80f3341'
     }
 };
 

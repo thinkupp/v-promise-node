@@ -139,9 +139,12 @@ router.post('/all', async function ( ctx ) {
 /*
 * 
 */
-router.put('/create', async function () {
+router.put('/create', async function ( ctx ) {
     try {
-	ctx.body = await AppointServer.updateCreate(ctx.request.body);
+	    ctx.body = await AppointServer.updateAppoint(ctx.request.body);
+    } catch (err) {
+        ctx.throw(400, err.toString())
     }
 })
+
 module.exports = router;

@@ -49,7 +49,7 @@ CREATE TABLE `appoint` (
  `support` smallint(5) DEFAULT 0 COMMENT '支持数',
  `unSupport` smallint(5) DEFAULT 0 COMMENT '反对数',
  `comment` smallint(5) DEFAULT 0 COMMENT '评论数',
- `isSupport` tinyint(1) DEFAULT NULL COMMENT '是否支持'
+ `isSupport` tinyint(1) DEFAULT NULL COMMENT '是否支持',
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8;
 

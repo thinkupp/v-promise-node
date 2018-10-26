@@ -42,7 +42,7 @@ const getAppointDetail = function ( uid, appointId ) {
                 })
             }
 
-            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = ${uid} and appointId = ${appointId} inner join users on users.id = ${uid} where appoint.id = ${appointId}`);
+            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = appoint.creatorId and appointId = ${appointId} inner join users on users.id = appoint.creatorId where appoint.id = ${appointId}`);
             if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
@@ -335,7 +335,7 @@ const allAppoint = function ( params = {} ) {
             if (startId === -1) startId = 999999;
 
             const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint, users where appoint.id < ${startId}  and appoint.creatorId = users.id order by id desc limit ${size}`);
-
+						console.log(`select * appoint from appoint, users where appoint.creatorId = users.id`);
             result.handleAppointData();
             resolve(result);
         } catch (err) {
@@ -394,6 +394,6 @@ module.exports = {
     userClockIn,
     supporters,
     allAppoint,
-	updateAppoint,
+		updateAppoint,
     updateAppoint
 }
