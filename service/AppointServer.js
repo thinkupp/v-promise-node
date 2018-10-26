@@ -332,13 +332,18 @@ const allAppoint = function ( params = {} ) {
 /*
 * 更新约定信息
 */
-const updateAppoint = function (uid, data) {
-    return new Promise((resolve, reject) => {
+const updateAppoint = function ( data ) {
+    return new Promise(async (resolve, reject) => {
 		try {
 			const appointId = data.id;
 			delete data.id;
+			// 计算结束时间
+			const endTime = data.startTime + data.effectiveTime * 60 * 1000;
+			data.endTime = getCurrentTime(endTime);
+			data.startTime = getCurrentTime(data.startTime);
 	    	await checkAppoint(appointId);
-	    	resolve($update('appoint', {id: appointId}, data));
+  	   		await $update('appoint', {id: appointId}, data);
+	    	resolve({id: appointId});
 		} catch (err) {
 	    	reject(err);
 		}
@@ -373,5 +378,6 @@ module.exports = {
     supportAppoint,
     userClockIn,
     supporters,
-    allAppoint
+    allAppoint,
+	updateAppoint
 }
