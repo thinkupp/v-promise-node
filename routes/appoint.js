@@ -85,6 +85,9 @@ router.post('/clock-in', async function ( ctx ) {
     }
 });
 
+/*
+* 支持
+* */
 router.get('/supporters', async function ( ctx ) {
     try {
         const uid = Number(ctx.request.header.uid);
@@ -96,6 +99,9 @@ router.get('/supporters', async function ( ctx ) {
     }
 });
 
+/*
+* 取消支持
+* */
 router.get('/un-supporters', async function ( ctx ) {
     try {
         const uid = Number(ctx.request.header.uid);
@@ -108,6 +114,9 @@ router.get('/un-supporters', async function ( ctx ) {
     }
 });
 
+/*
+* 举报
+* */
 router.post('/tip-off', async function ( ctx ) {
     try {
 
@@ -115,5 +124,16 @@ router.post('/tip-off', async function ( ctx ) {
         ctx.throw(400, err.toString());
     }
 });
+
+/*
+* 大厅列表
+* */
+router.post('/all', async function ( ctx ) {
+    try {
+        ctx.body = await AppointServer.allAppoint(ctx.request.body);
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+})
 
 module.exports = router;

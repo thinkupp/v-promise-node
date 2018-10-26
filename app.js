@@ -41,6 +41,38 @@ Object.prototype.calcAppointStatus = function () {
     }
 };
 
+/*
+* 处理用户信息
+* */
+Object.prototype.handleUserInfo = function ( handleU = true ) {
+    this.onlookers = !!this.onlookers;
+    this.private = !!this.private;
+
+    if (handleU) {
+        this.u = {
+            nickName: this.nickName,
+            avatar: this.avatar,
+            gender: this.gender
+        };
+
+        delete this.nickName;
+        delete this.avatar;
+        delete this.gender;
+        delete this.deleted;
+        delete this.updateTime;
+    }
+};
+
+/*
+* 用户信息合并、相关类型转换、状态判断
+* */
+Object.prototype.handleAppointData = function handleAppointData( handleU = true ) {
+    this.forEach(item => {
+        item.handleUserInfo( handleU );
+        item.calcAppointStatus();
+    })
+};
+
 // middlewares
 app.use(bodyparser({
     enableTypes: ['json', 'form', 'text']

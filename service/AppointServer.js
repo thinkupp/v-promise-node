@@ -60,33 +60,8 @@ const getAppointDetail = function ( uid, appointId ) {
             }
 
             // 计算约定状态
-            const currentTime = Date.now();
-            result.startTime *= 1000;
-            result.endTime *= 1000;
-
-            // 0-> 未开始, 1 -> 进行中 2 -> 结束 3 -> 按时完成 4 -> 超时完成
-            if (result.finishTime) {
-                result.finishTime *= 1000;
-                if (result.finishTime < result.endTime) {
-                    result.status = 3;
-                } else {
-                    result.status = 4;
-                }
-            } else {
-                result.status = currentTime < result.startTime ? 0 : currentTime > result.endTime ? 2 : 1;
-            }
-
-            result.onlookers = !!result.onlookers;
-            result.private = !!result.private;
-
-            result.u = {
-                avatar: result.avatar,
-                nickName: result.nickName,
-                gender: result.gender
-            };
-            delete result.avatar;
-            delete result.nickName;
-            delete result.gender;
+            result.calcAppointStatus();
+            result.handleUserInfo();
 
             resolve(result)
         } catch (err) {
@@ -336,6 +311,22 @@ const supporters = function ( appointId, type ) {
             reject(err);
         }
     })
+};
+
+const allAppoint = function ( params = {} ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let { startId = -1, size = 30 } = params;
+            if (startId === -1) startId = 999999;
+
+            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint, users where appoint.id < ${startId}  and appoint.creatorId = users.id order by id desc limit ${size}`);
+
+            result.handleAppointData();
+            resolve(result);
+        } catch (err) {
+            reject(err)
+        }
+    })
 }
 
 function checkAppoint( appointId ) {
@@ -364,5 +355,6 @@ module.exports = {
     watchAppoint,
     supportAppoint,
     userClockIn,
-    supporters
+    supporters,
+    allAppoint
 }

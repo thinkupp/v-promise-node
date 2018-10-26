@@ -149,32 +149,6 @@ function $findOne( table, query, field ) {
     })
 }
 
- /*
- * 用户信息合并、相关类型转换、状态判断
- * */
- function handleAppointData( appointData, handleU = true ) {
-     appointData.forEach(item => {
-         item.onlookers = !!item.onlookers;
-         item.private = !!item.private;
-
-         if (handleU) {
-             item.u = {
-                 nickName: item.nickName,
-                 avatar: item.avatar,
-                 gender: item.gender
-             };
-
-             delete item.nickName;
-             delete item.avatar;
-             delete item.gender;
-             delete item.deleted;
-         }
-
-         item.calcAppointStatus();
-     })
-
- }
-
 function $findAppointByLimit( query, option ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -186,7 +160,7 @@ function $findAppointByLimit( query, option ) {
 
             const result = await dbQuery(`select appoint.* from appoint WHERE  deleted = 0 and appoint.creatorId = ${query.creatorId} AND appoint.id > ${id} order by id DESC limit ${size}`);
 
-            handleAppointData(result, false);
+            result.handleAppointData(false);
 
             return resolve(result);
         } catch (err) {
@@ -204,7 +178,7 @@ function $findJoinAppointByLimit ( uid, option ) {
 
             const result = await dbQuery(`SELECT appoint.*, users.avatar, users.gender, users.nickName FROM watcher INNER JOIN users on users.id = ${uid} INNER JOIN appoint on appoint.id = watcher.appointId WHERE deleted = 0 AND watcher.appointId = appoint.id AND watcher.userId = ${uid} AND watcher.id < ${option.startId} ORDER BY id desc limit ${option.size};`);
 
-            handleAppointData(result);
+            result.handleAppointData();
 
             resolve(result);
         } catch (err) {
