@@ -43,7 +43,7 @@ const getAppointDetail = function ( uid, appointId ) {
                 })
             }
             
-						let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = appoint.creatorId and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
+						let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
 
 						if (result.length) {
                 result = result[0];
