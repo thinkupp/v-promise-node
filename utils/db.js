@@ -176,7 +176,9 @@ function $findJoinAppointByLimit ( uid, option ) {
                 option.startId = 99999999;
             }
 
-            const result = await dbQuery(`SELECT appoint.*, users.avatar, users.gender, users.nickName FROM watcher INNER JOIN users on users.id = ${uid} INNER JOIN appoint on appoint.id = watcher.appointId WHERE deleted = 0 AND watcher.appointId = appoint.id AND watcher.userId = ${uid} AND watcher.id < ${option.startId} ORDER BY id desc limit ${option.size};`);
+           // const result = await dbQuery(`SELECT appoint.*, users.avatar, users.gender, users.nickname FROM watcher INNER JOIN users on users.id = ${uid} INNER JOIN appoint on appoint.id = watcher.appointId WHERE deleted = 0 AND watcher.appointId = appoint.id AND watcher.userId = ${uid} AND watcher.id < ${option.startId} ORDER BY id desc limit ${option.size};`);
+
+					  const result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender from (appoint, users, watcher) where watcher.appointId = appoint.id and watcher.userId = ${uid} and users.id = appoint.creatorId`);
 
             result.handleAppointData();
 

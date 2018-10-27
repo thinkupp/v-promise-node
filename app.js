@@ -50,7 +50,7 @@ Object.prototype.handleUserInfo = function ( handleU = true ) {
 
     if (handleU) {
         this.u = {
-            nickName: this.nickName,
+            nickName: this.nickname,
             avatar: this.avatar,
             gender: this.gender
         };

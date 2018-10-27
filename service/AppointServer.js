@@ -41,9 +41,10 @@ const getAppointDetail = function ( uid, appointId ) {
                     access: 'access + 1' + types.SPECIAL_SET_VALUE
                 })
             }
+            
+						let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = appoint.creatorId and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
 
-            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = appoint.creatorId and appointId = ${appointId} inner join users on users.id = appoint.creatorId where appoint.id = ${appointId}`);
-            if (result.length) {
+						if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
                 result.isCreator = result.creatorId === Number(uid);
