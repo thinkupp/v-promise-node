@@ -13,6 +13,7 @@ const createAppoint = function ( uid, params ) {
 const getAppointDetail = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
+						await checkAppoint(appointId);
             // 查询是否有此人的访问记录
             const visitRecord = await dbQuery(`select id from visit where userId = ${uid} AND appointId = ${appointId}`);
             if (visitRecord.length) {
@@ -329,14 +330,19 @@ const supporters = function ( appointId, type ) {
 /*
 * 所有约定分页查询
 */
-const allAppoint = function ( params = {} ) {
+const allAppoint = function ( uid, params = {} ) {
     return new Promise(async (resolve, reject) => {
         try {
             let { startId = -1, size = 30 } = params;
             if (startId === -1) startId = 999999;
 
-            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint, users where appoint.id < ${startId}  and appoint.creatorId = users.id order by id desc limit ${size}`);
-						console.log(`select * appoint from appoint, users where appoint.creatorId = users.id`);
+            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id order by id desc limit ${size}`);
+
+						result.forEach(item => {
+							item.watching = !!item.userId;
+							delete item.userId;
+						})
+
             result.handleAppointData();
             resolve(result);
         } catch (err) {

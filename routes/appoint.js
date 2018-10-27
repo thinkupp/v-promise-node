@@ -130,7 +130,7 @@ router.post('/tip-off', async function ( ctx ) {
 * */
 router.post('/all', async function ( ctx ) {
     try {
-        ctx.body = await AppointServer.allAppoint(ctx.request.body);
+        ctx.body = await AppointServer.allAppoint(ctx.request.header.uid, ctx.request.body);
     } catch (err) {
         ctx.throw(400, err.toString());
     }
