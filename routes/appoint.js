@@ -41,13 +41,14 @@ router.get('/join', async function ( ctx ) {
     }
 })
 
-router.get('/detail/:id', async function ( ctx ) {
-    const id = ctx.params.id;
-    if (!id) return ctx.throw(400, '错误的ID');
-    const uid = Number(ctx.request.header.uid);
+router.post('/detail', async function ( ctx ) {
+    // const id = ctx.params.id;
+    const body = ctx.request.body;
+    if (!body.appointId) return ctx.throw(400, '错误的ID');
+    const uid = ctx.request.header.uid;
 
     try {
-        const r = await AppointServer.getAppointDetail( uid, id );
+        const r = await AppointServer.getAppointDetail( uid, body );
         ctx.body = r;
     } catch (err) {
         ctx.throw(400, GlobalServer.handleError(err))

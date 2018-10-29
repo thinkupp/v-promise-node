@@ -10,24 +10,26 @@ const createAppoint = function ( uid, params ) {
     return $insert('appoint', params);
 };
 
-const getAppointDetail = function ( uid, appointId ) {
+const getAppointDetail = function ( uid, {appointId, refresh} ) {
     return new Promise(async (resolve, reject) => {
         try {
-						await checkAppoint(appointId);
+			await checkAppoint(appointId);
             // 查询是否有此人的访问记录
             const visitRecord = await dbQuery(`select id from visit where userId = ${uid} AND appointId = ${appointId}`);
             if (visitRecord.length) {
-                await $update('visit', {
-                    userId: uid,
-                    appointId
-                }, {
-                    number: 'number + 1' + types.SPECIAL_SET_VALUE,
-                    lastVisitTime: getCurrentTime()
-                });
-                // 增加访问量
-                await $update('appoint', { id: appointId }, {
-                    access: 'access + 1' + types.SPECIAL_SET_VALUE
-                })
+                if (!refresh) {
+                    await $update('visit', {
+                        userId: uid,
+                        appointId
+                    }, {
+                         number: 'number + 1' + types.SPECIAL_SET_VALUE,
+                         lastVisitTime: getCurrentTime()
+                    });
+                    // 增加访问量
+                    await $update('appoint', { id: appointId }, {
+                        access: 'access + 1' + types.SPECIAL_SET_VALUE
+                    })
+                }
             } else {
                 await $insert('visit', {
                     lastVisitTime: getCurrentTime(),
@@ -217,8 +219,12 @@ const supportAppoint = function ( uid, params ) {
             };
 
             // 查询是否已经支持或反对
-            const record = await dbQuery(`select id from support where userId = ${uid} and appointId = ${appointId}`);
+            const record = await dbQuery(`select support from support where userId = ${uid} and appointId = ${appointId}`);
             if (record.length) {
+                console.log(record[0].support, support);
+                if (record[0].support === support) {
+                    return reject('重复的选择');
+                }
                 // 更新数据表
                 await $update('support', {
                     userId: uid,
