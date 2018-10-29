@@ -13,6 +13,7 @@ const createAppoint = function ( uid, params ) {
 const getAppointDetail = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
+						await checkAppoint(appointId);
             // 查询是否有此人的访问记录
             const visitRecord = await dbQuery(`select id from visit where userId = ${uid} AND appointId = ${appointId}`);
             if (visitRecord.length) {
@@ -41,9 +42,10 @@ const getAppointDetail = function ( uid, appointId ) {
                     access: 'access + 1' + types.SPECIAL_SET_VALUE
                 })
             }
+            
+						let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = appoint.creatorId and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
 
-            let result = await dbQuery(`select appoint.*, users.nickName, users.avatar, users.gender, watcher.userId from appoint left join watcher on watcher.userId = ${uid} and appointId = ${appointId} inner join users on users.id = ${uid} where appoint.id = ${appointId}`);
-            if (result.length) {
+						if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
                 result.isCreator = result.creatorId === Number(uid);
@@ -82,6 +84,9 @@ const getUserJoinAppointList = function ( uid, query ) {
     return $findJoinAppointByLimit(uid, query);
 };
 
+/*
+* 监督某约定
+*/
 const watchAppoint = function ( uid, appointId ) {
     return new Promise(async (resolve, reject) => {
         const api = '/appoint/watch POST';
@@ -179,6 +184,9 @@ const watchAppoint = function ( uid, appointId ) {
     })
 };
 
+/*
+* 支持某个约定 
+*/
 const supportAppoint = function ( uid, params ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -229,6 +237,9 @@ const supportAppoint = function ( uid, params ) {
     })
 };
 
+/*
+* 打卡
+*/
 const userClockIn = function ( uid, body = {} ) {
     return new Promise(async (resolve, reject) => {
         const api = '/appoint/clock-in POST';
@@ -298,6 +309,9 @@ const userClockIn = function ( uid, body = {} ) {
     })
 };
 
+/*
+* 返回某约定的支持者/反对者
+*/
 const supporters = function ( appointId, type ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -313,13 +327,21 @@ const supporters = function ( appointId, type ) {
     })
 };
 
-const allAppoint = function ( params = {} ) {
+/*
+* 所有约定分页查询
+*/
+const allAppoint = function ( uid, params = {} ) {
     return new Promise(async (resolve, reject) => {
         try {
             let { startId = -1, size = 30 } = params;
             if (startId === -1) startId = 999999;
 
-            const result = await dbQuery(`select appoint.*, users.avatar, users.nickName, users.gender from appoint, users where appoint.id < ${startId}  and appoint.creatorId = users.id order by id desc limit ${size}`);
+            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id order by id desc limit ${size}`);
+
+						result.forEach(item => {
+							item.watching = !!item.userId;
+							delete item.userId;
+						})
 
             result.handleAppointData();
             resolve(result);
@@ -335,25 +357,25 @@ const allAppoint = function ( params = {} ) {
 const updateAppoint = function ( data ) {
     return new Promise(async (resolve, reject) => {
 		try {
-			const appointId = data.id;
-			delete data.id;
-			// 计算结束时间
-			const endTime = data.startTime + data.effectiveTime * 60 * 1000;
-			data.endTime = getCurrentTime(endTime);
-			data.startTime = getCurrentTime(data.startTime);
-	    	await checkAppoint(appointId);
-  	   		await $update('appoint', {id: appointId}, data);
-	    	resolve({id: appointId});
-		} catch (err) {
-	    	reject(err);
-		}
-    })
+				const appointId = data.id;
+				delete data.id;
+		  	// 计算结束时间
+				const endTime = data.startTime + data.effectiveTime * 60 * 1000;
+				data.endTime = getCurrentTime(endTime);
+				data.startTime = getCurrentTime(data.startTime);
+	   	  await checkAppoint(appointId);
+  	 	  await $update('appoint', {id: appointId}, data);
+	   	  resolve({id: appointId});
+			} catch (err) {
+	    		reject(err);
+			}
+		})
 }
 
 function checkAppoint( appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
-	    if(!appointId) return reject("错误的访问");
+	  			  if(!appointId) return reject("错误的访问");
             let appoint = await dbQuery(`select * from appoint where id = ${appointId}`);
             if (!appoint.length) {
                 return reject('约定不存在')
@@ -379,5 +401,6 @@ module.exports = {
     userClockIn,
     supporters,
     allAppoint,
-	updateAppoint
+		updateAppoint,
+    updateAppoint
 }
