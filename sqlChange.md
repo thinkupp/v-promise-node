@@ -18,3 +18,8 @@ appoint ->
 
 visit ->
     add table: deleted
+
+// old
+[chnage]
+appoint ->
+    delete `isSupport`

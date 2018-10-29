@@ -43,16 +43,15 @@ const getAppointDetail = function ( uid, appointId ) {
                 })
             }
             
-			let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
-
-            console.log(result);
-            console.log(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = appoint.creatorId and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
+			let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId, support.support as supportDetail from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = ${appointId} left join support on support.appointId = ${appointId} and support.userId = ${uid}  where appoint.id = ${appointId} and users.id = appoint.creatorId`);
 
 			if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
                 result.isCreator = result.creatorId === Number(uid);
+                result.isSupport = result.supportDetail === null ? -1 : result.supportDetail;
                 delete result.userId;
+                delete result.supportDetail;
             } else {
                 const api = '/appoint/:id GET';
                 ErrorLogServer.appointErrorLog.fetchAppointDetailError({
@@ -211,30 +210,41 @@ const supportAppoint = function ( uid, params ) {
 
             if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
 
-            // 查询是否已有
-            if (appoint.isSupport !== void 0 && appoint.isSupport !== null) {
-                // 更新
-                return reject('不能重复选择');
-            }
-
-            // 写入数据到表
-            await $insert('support', {
-                userId: uid,
-                appointId,
-                support
-            });
-
-            // 更新用户字段信息
-            const supportName = support === 0 ? 'unSupport' : 'support';
-            await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1, isSupport = ${support} WHERE id = ${appointId}`);
-
             // 返回约定的支持者和反对者
             const result = {
                 support: appoint.support,
                 unSupport: appoint.unSupport
             };
-            // 将老数据更新
-            result[supportName]++;
+
+            // 查询是否已经支持或反对
+            const record = await dbQuery(`select id from support where userId = ${uid} and appointId = ${appointId}`);
+            if (record.length) {
+                // 更新数据表
+                await $update('support', {
+                    userId: uid,
+                    appointId
+                }, { support })
+
+                // 更新用户字段信息
+                const add = support === 0 ? 'unSupport' : 'support';
+                const unAdd = support === 0 ? 'support' : 'unSupport';
+
+                await dbQuery(`update appoint SET ${add} = ${add} + 1, ${unAdd} = ${unAdd} - 1 where id = ${appointId}`);
+                result[add]++;
+                result[unAdd]--;
+            } else {
+                 // 写入数据到表
+                 await $insert('support', {
+                    userId: uid,
+                    appointId,
+                    support
+                 });
+
+                 // 更新用户字段信息
+                 const supportName = support === 0 ? 'unSupport' : 'support';
+                 await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1, isSupport = ${support} WHERE id = ${appointId}`);
+                 result[supportName]++;
+            }
 
             resolve(result);
         } catch (err) {
