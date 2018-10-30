@@ -395,6 +395,22 @@ const updateAppoint = function ( data ) {
 		})
 }
 
+/*
+ * 查找某个约定的监督者
+ * */
+const fetchWatcher = function ( appointId, { startId = 999999, size = 30  }  ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            await checkAppoint( appointId );
+            if (startId === -1) startId = 999999;
+
+            resolve(dbQuery(`select users.nickname, users.avatar from watcher, users where watcher.appointId = ${appointId} and watcher.id < ${startId} and users.id = watcher.userId order by watcher.createTime desc limit ${size}`));
+        } catch (err) {
+            reject(err);
+        }
+    })
+}
+
 function checkAppoint( appointId ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -424,6 +440,6 @@ module.exports = {
     userClockIn,
     supporters,
     allAppoint,
-		updateAppoint,
-    updateAppoint
+	updateAppoint,
+    fetchWatcher
 }

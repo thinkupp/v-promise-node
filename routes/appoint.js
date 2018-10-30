@@ -147,4 +147,18 @@ router.put('/create', async function ( ctx ) {
 		ctx.throw(400, err.toString());
 	}
 });
+
+/*
+ * 查找监督者
+ * */
+router.post('/watcher/:id', async function ( ctx ) {
+    try {
+        const appointId = ctx.params.id;
+        const body = ctx.request.body;
+        ctx.body = await AppointServer.fetchWatcher(appointId, body);
+    } catch (err) {
+        ctx.throw(400, err.toString());
+    }
+})
+
 module.exports = router;
