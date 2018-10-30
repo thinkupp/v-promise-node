@@ -4,8 +4,9 @@ const ErrorLogServer = require('./ErrorLogServer');
 const { getCurrentTime, formatTime, calcTime } = require('../utils');
 
 const createAppoint = function ( uid, params ) {
-    params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
-    params.endTime = parseInt((new Date( params.startTime ).getTime() * 1000 + params.effectiveTime * 60 * 1000) / 1000);
+    params.startTime = new Date(params.startTime).getTime();
+    params.endTime = getCurrentTime(params.startTime + params.effectiveTime * 60 * 1000);
+    params.startTime = getCurrentTime( params.startTime );
     params.creatorId = uid;
 
     // 最多允许用户上传十张图片
@@ -352,7 +353,7 @@ const supporters = function ( appointId, type ) {
             // 检查约定是否有效
             await checkAppoint(appointId);
 
-            return resolve(dbQuery(`select users.avatar, users.nickName from support, users where support.appointId = ${appointId} and users.id = support.userId and support.support = ${type}`))
+            return resolve(dbQuery(`select users.avatar, users.nickname from support, users where support.appointId = ${appointId} and users.id = support.userId and support.support = ${type}`))
         } catch (err) {
             reject(err);
         }
