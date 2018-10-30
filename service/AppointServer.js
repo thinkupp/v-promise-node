@@ -7,6 +7,15 @@ const createAppoint = function ( uid, params ) {
     params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
     params.endTime = parseInt((new Date( params.startTime ).getTime() * 1000 + params.effectiveTime * 60 * 1000) / 1000);
     params.creatorId = uid;
+
+    // 最多允许用户上传十张图片
+    let images = params.images;
+    if (images.length > 10) {
+        images = images.slice(0, 10);
+    }
+    params.images = JSON.stringify(images);
+    images = null;
+
     return $insert('appoint', params);
 };
 
@@ -52,6 +61,7 @@ const getAppointDetail = function ( uid, {appointId, refresh} ) {
                 result.watching = !!result.userId;
                 result.isCreator = result.creatorId === Number(uid);
                 result.isSupport = result.supportDetail === null ? -1 : result.supportDetail;
+                result.images = JSON.parse(result.images);
                 delete result.userId;
                 delete result.supportDetail;
             } else {

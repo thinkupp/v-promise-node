@@ -23,3 +23,4 @@ visit ->
 [chnage]
 appoint ->
     delete `isSupport`
+    images varchar(2000)
