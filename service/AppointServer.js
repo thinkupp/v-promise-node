@@ -358,12 +358,12 @@ const allAppoint = function ( uid, params = {} ) {
             let { startId = -1, size = 30 } = params;
             if (startId === -1) startId = 999999;
 
-            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id order by id desc limit ${size}`);
+            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id and appoint.private = 0 order by id desc limit ${size}`);
 
-						result.forEach(item => {
-							item.watching = !!item.userId;
-							delete item.userId;
-						})
+			result.forEach(item => {
+			    item.watching = !!item.userId;
+				delete item.userId;
+			})
 
             result.handleAppointData();
             resolve(result);
@@ -380,14 +380,15 @@ const updateAppoint = function ( data ) {
     return new Promise(async (resolve, reject) => {
 		try {
 				const appointId = data.id;
-				delete data.id;
-		  	// 计算结束时间
-				const endTime = data.startTime + data.effectiveTime * 60 * 1000;
-				data.endTime = getCurrentTime(endTime);
-				data.startTime = getCurrentTime(data.startTime);
-	   	  await checkAppoint(appointId);
-  	 	  await $update('appoint', {id: appointId}, data);
-	   	  resolve({id: appointId});
+                delete data.id;
+
+                data.startTime = getCurrentTime(data.startTime);
+		  	    // 计算结束时间
+                const endTime = data.startTime * 1000 + data.effectiveTime * 60 * 1000;
+                data.endTime = getCurrentTime(endTime);
+	   	        await checkAppoint(appointId);
+  	 	        await $update('appoint', {id: appointId}, data);
+	   	        resolve({id: appointId});
 			} catch (err) {
 	    		reject(err);
 			}
