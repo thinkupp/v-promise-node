@@ -387,17 +387,23 @@ const allAppoint = function ( uid, params = {} ) {
 /*
 * 更新约定信息
 */
-const updateAppoint = function ( data ) {
+const updateAppoint = function ( uid,  data ) {
     return new Promise(async (resolve, reject) => {
 		try {
 				const appointId = data.id;
                 delete data.id;
-
-                data.startTime = getCurrentTime(data.startTime);
-		  	    // 计算结束时间
-                const endTime = data.startTime * 1000 + data.effectiveTime * 60 * 1000;
-                data.endTime = getCurrentTime(endTime);
-	   	        await checkAppoint(appointId);
+                const appoint = await checkAppoint(appointId);
+                // 是否有权修改
+                if (appoint.creatorId !== uid) {
+                    return reject('只有创建者才可以修改！')
+                }
+                // 开始或结束后，不能再修改开始时间
+                if (appoint.finishTime || Date.now() >= appoint.startTime * 1000) {
+                    delete data.startTime;
+                } else {
+                    data.startTime = getCurrentTime(data.startTime);
+                    data.endTime = data.startTime + data.effectiveTime * 60;
+                }
   	 	        await $update('appoint', {id: appointId}, data);
 	   	        resolve({id: appointId});
 			} catch (err) {
