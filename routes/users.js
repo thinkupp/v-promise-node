@@ -40,4 +40,13 @@ router.delete('/access-record', async function ( ctx ) {
     }
 })
 
+router.post('/feedback', async function ( ctx ) {
+		try {
+				const uid = ctx.request.header.uid;
+				ctx.body = await UsersServer.feedback( uid, ctx.request.body );
+		} catch (err) {
+				ctx.throw(400, err.toString());
+		}
+})
+
 module.exports = router;

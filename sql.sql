@@ -112,3 +112,11 @@ CREATE TABLE `error_log` (
 `appointId` int(10) DEFAULT NULL,
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='错误收集表';
+
+CREATE TABLE `feedback` (
+`id` int(10) NOT NULL AUTO_INCREMENT,
+`createTime` datetime DEFAULT CURRENT_TIMESTAMP,
+`userId` int(10) NOT NULL,
+`content` varchar(500) NOT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='意见反馈';

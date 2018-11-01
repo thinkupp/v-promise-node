@@ -156,6 +156,21 @@ const removeAccessRecord = function ( visit_id ) {
     })
 }
 
+/*
+* 意见建议
+*/
+const feedback = function ( uid, data  ) {
+		return new Promise(async (resolve, reject) => {
+				try {
+						if (!data.content) return reject('反馈内容不能为空');
+						const result = await dbQuery(`INSERT INTO feedback(userId, content) VALUES(${uid}, ${data.content})`);
+						resolve('success');
+				} catch (err) {
+						reject(err);
+				}
+		})
+}
+
 const checkUser = function ( uid ) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -190,5 +205,6 @@ module.exports = {
     register,
     checkUser,
     userAccessRecord,
-    removeAccessRecord
+    removeAccessRecord,
+		feedback
 }
