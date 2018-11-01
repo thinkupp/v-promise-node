@@ -4,30 +4,42 @@ const ErrorLogServer = require('./ErrorLogServer');
 const { getCurrentTime, formatTime, calcTime } = require('../utils');
 
 const createAppoint = function ( uid, params ) {
-    params.startTime = parseInt(new Date( params.startTime ).getTime() / 1000);
-    params.endTime = parseInt((new Date( params.startTime ).getTime() * 1000 + params.effectiveTime * 60 * 1000) / 1000);
+    params.startTime = new Date(params.startTime).getTime();
+    params.endTime = getCurrentTime(params.startTime + params.effectiveTime * 60 * 1000);
+    params.startTime = getCurrentTime( params.startTime );
     params.creatorId = uid;
+
+    // 最多允许用户上传十张图片
+    let images = params.images;
+    if (images.length > 10) {
+        images = images.slice(0, 10);
+    }
+    params.images = JSON.stringify(images);
+    images = null;
+
     return $insert('appoint', params);
 };
 
-const getAppointDetail = function ( uid, appointId ) {
+const getAppointDetail = function ( uid, {appointId, refresh} ) {
     return new Promise(async (resolve, reject) => {
         try {
-						await checkAppoint(appointId);
+			await checkAppoint(appointId);
             // 查询是否有此人的访问记录
             const visitRecord = await dbQuery(`select id from visit where userId = ${uid} AND appointId = ${appointId}`);
             if (visitRecord.length) {
-                await $update('visit', {
-                    userId: uid,
-                    appointId
-                }, {
-                    number: 'number + 1' + types.SPECIAL_SET_VALUE,
-                    lastVisitTime: getCurrentTime()
-                });
-                // 增加访问量
-                await $update('appoint', { id: appointId }, {
-                    access: 'access + 1' + types.SPECIAL_SET_VALUE
-                })
+                if (!refresh) {
+                    await $update('visit', {
+                        userId: uid,
+                        appointId
+                    }, {
+                         number: 'number + 1' + types.SPECIAL_SET_VALUE,
+                         lastVisitTime: getCurrentTime()
+                    });
+                    // 增加访问量
+                    await $update('appoint', { id: appointId }, {
+                        access: 'access + 1' + types.SPECIAL_SET_VALUE
+                    })
+                }
             } else {
                 await $insert('visit', {
                     lastVisitTime: getCurrentTime(),
@@ -43,13 +55,20 @@ const getAppointDetail = function ( uid, appointId ) {
                 })
             }
             
+<<<<<<< HEAD
 						let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = ${appointId} where appoint.id = ${appointId} and users.id = appoint.creatorId`);
+=======
+			let result = await dbQuery(`select appoint.*, users.nickname, users.avatar, users.gender, watcher.userId, support.support as supportDetail from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = ${appointId} left join support on support.appointId = ${appointId} and support.userId = ${uid}  where appoint.id = ${appointId} and users.id = appoint.creatorId`);
+>>>>>>> e60914eba5bb57256253969644c287152ddfa57c
 
-						if (result.length) {
+			if (result.length) {
                 result = result[0];
                 result.watching = !!result.userId;
                 result.isCreator = result.creatorId === Number(uid);
+                result.isSupport = result.supportDetail === null ? -1 : result.supportDetail;
+                result.images = JSON.parse(result.images);
                 delete result.userId;
+                delete result.supportDetail;
             } else {
                 const api = '/appoint/:id GET';
                 ErrorLogServer.appointErrorLog.fetchAppointDetailError({
@@ -145,8 +164,10 @@ const watchAppoint = function ( uid, appointId ) {
                 });
                 return reject('您已是监督者');
             }
-            // 是否已经开始
+
             const currentTime = Date.now();
+        /*
+            // 是否已经开始
             const startTime = result.startTime * 1000;
             if (currentTime < startTime) {
                 ErrorLogServer.appointErrorLog.watchError({
@@ -158,6 +179,7 @@ const watchAppoint = function ( uid, appointId ) {
                 });
                 return reject('约定未开启');
             }
+         */
             const endTime = result.endTime * 1000;
             if (currentTime > endTime || result.finishTime) {
                 ErrorLogServer.appointErrorLog.watchError({
@@ -205,30 +227,45 @@ const supportAppoint = function ( uid, params ) {
 
             if (currentTime > appoint.endTime * 1000 || appoint.finishTime) return reject('约定已结束，无法再选择');
 
-            // 查询是否已有
-            if (appoint.isSupport !== void 0 && appoint.isSupport !== null) {
-                // 更新
-                return reject('不能重复选择');
-            }
-
-            // 写入数据到表
-            await $insert('support', {
-                userId: uid,
-                appointId,
-                support
-            });
-
-            // 更新用户字段信息
-            const supportName = support === 0 ? 'unSupport' : 'support';
-            await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1, isSupport = ${support} WHERE id = ${appointId}`);
-
             // 返回约定的支持者和反对者
             const result = {
                 support: appoint.support,
                 unSupport: appoint.unSupport
             };
-            // 将老数据更新
-            result[supportName]++;
+
+            // 查询是否已经支持或反对
+            const record = await dbQuery(`select support from support where userId = ${uid} and appointId = ${appointId}`);
+            if (record.length) {
+                console.log(record[0].support, support);
+                if (record[0].support === support) {
+                    return reject('重复的选择');
+                }
+                // 更新数据表
+                await $update('support', {
+                    userId: uid,
+                    appointId
+                }, { support })
+
+                // 更新用户字段信息
+                const add = support === 0 ? 'unSupport' : 'support';
+                const unAdd = support === 0 ? 'support' : 'unSupport';
+
+                await dbQuery(`update appoint SET ${add} = ${add} + 1, ${unAdd} = ${unAdd} - 1 where id = ${appointId}`);
+                result[add]++;
+                result[unAdd]--;
+            } else {
+                 // 写入数据到表
+                 await $insert('support', {
+                    userId: uid,
+                    appointId,
+                    support
+                 });
+
+                 // 更新用户字段信息
+                 const supportName = support === 0 ? 'unSupport' : 'support';
+                 await dbQuery(`update appoint SET ${supportName} = ${supportName} + 1, isSupport = ${support} WHERE id = ${appointId}`);
+                 result[supportName]++;
+            }
 
             resolve(result);
         } catch (err) {
@@ -320,7 +357,7 @@ const supporters = function ( appointId, type ) {
             // 检查约定是否有效
             await checkAppoint(appointId);
 
-            return resolve(dbQuery(`select users.avatar, users.nickName from support, users where support.appointId = ${appointId} and users.id = support.userId and support.support = ${type}`))
+            return resolve(dbQuery(`select users.avatar, users.nickname from support, users where support.appointId = ${appointId} and users.id = support.userId and support.support = ${type}`))
         } catch (err) {
             reject(err);
         }
@@ -336,12 +373,12 @@ const allAppoint = function ( uid, params = {} ) {
             let { startId = -1, size = 30 } = params;
             if (startId === -1) startId = 999999;
 
-            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id order by id desc limit ${size}`);
+            const result = await dbQuery(`select watcher.userId, appoint.*, users.avatar, users.nickname, users.gender from (appoint, users) left join watcher on watcher.userId = ${uid} and watcher.appointId = appoint.id where appoint.id < ${startId} and appoint.creatorId = users.id and appoint.private = 0 order by id desc limit ${size}`);
 
-						result.forEach(item => {
-							item.watching = !!item.userId;
-							delete item.userId;
-						})
+			result.forEach(item => {
+			    item.watching = !!item.userId;
+				delete item.userId;
+			})
 
             result.handleAppointData();
             resolve(result);
@@ -354,22 +391,45 @@ const allAppoint = function ( uid, params = {} ) {
 /*
 * 更新约定信息
 */
-const updateAppoint = function ( data ) {
+const updateAppoint = function ( uid,  data ) {
     return new Promise(async (resolve, reject) => {
 		try {
 				const appointId = data.id;
-				delete data.id;
-		  	// 计算结束时间
-				const endTime = data.startTime + data.effectiveTime * 60 * 1000;
-				data.endTime = getCurrentTime(endTime);
-				data.startTime = getCurrentTime(data.startTime);
-	   	  await checkAppoint(appointId);
-  	 	  await $update('appoint', {id: appointId}, data);
-	   	  resolve({id: appointId});
+                delete data.id;
+                const appoint = await checkAppoint(appointId);
+                // 是否有权修改
+                if (appoint.creatorId !== uid) {
+                    return reject('只有创建者才可以修改！')
+                }
+                // 开始或结束后，不能再修改开始时间
+                if (appoint.finishTime || Date.now() >= appoint.startTime * 1000) {
+                    delete data.startTime;
+                } else {
+                    data.startTime = getCurrentTime(data.startTime);
+                    data.endTime = data.startTime + data.effectiveTime * 60;
+                }
+  	 	        await $update('appoint', {id: appointId}, data);
+	   	        resolve({id: appointId});
 			} catch (err) {
 	    		reject(err);
 			}
 		})
+}
+
+/*
+ * 查找某个约定的监督者
+ * */
+const fetchWatcher = function ( appointId, { startId = 999999, size = 30  }  ) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            await checkAppoint( appointId );
+            if (startId === -1) startId = 999999;
+
+            resolve(dbQuery(`select users.nickname, users.avatar from watcher, users where watcher.appointId = ${appointId} and watcher.id < ${startId} and users.id = watcher.userId order by watcher.createTime desc limit ${size}`));
+        } catch (err) {
+            reject(err);
+        }
+    })
 }
 
 function checkAppoint( appointId ) {
@@ -401,6 +461,6 @@ module.exports = {
     userClockIn,
     supporters,
     allAppoint,
-		updateAppoint,
-    updateAppoint
+	updateAppoint,
+    fetchWatcher
 }

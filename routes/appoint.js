@@ -41,13 +41,14 @@ router.get('/join', async function ( ctx ) {
     }
 })
 
-router.get('/detail/:id', async function ( ctx ) {
-    const id = ctx.params.id;
-    if (!id) return ctx.throw(400, '错误的ID');
-    const uid = Number(ctx.request.header.uid);
+router.post('/detail', async function ( ctx ) {
+    // const id = ctx.params.id;
+    const body = ctx.request.body;
+    if (!body.appointId) return ctx.throw(400, '错误的ID');
+    const uid = ctx.request.header.uid;
 
     try {
-        const r = await AppointServer.getAppointDetail( uid, id );
+        const r = await AppointServer.getAppointDetail( uid, body );
         ctx.body = r;
     } catch (err) {
         ctx.throw(400, GlobalServer.handleError(err))
@@ -137,13 +138,26 @@ router.post('/all', async function ( ctx ) {
 })
 
 /*
-* 
+* 更新约定
 */
 router.put('/create', async function ( ctx ) {
+	try {
+		ctx.body = await AppointServer.updateAppoint(ctx.request.header.uid, ctx.request.body);
+	} catch (err) {
+		ctx.throw(400, err.toString());
+	}
+});
+
+/*
+ * 查找监督者
+ * */
+router.post('/watcher/:id', async function ( ctx ) {
     try {
-	    ctx.body = await AppointServer.updateAppoint(ctx.request.body);
+        const appointId = ctx.params.id;
+        const body = ctx.request.body;
+        ctx.body = await AppointServer.fetchWatcher(appointId, body);
     } catch (err) {
-        ctx.throw(400, err.toString())
+        ctx.throw(400, err.toString());
     }
 })
 
